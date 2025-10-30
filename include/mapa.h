@@ -3,9 +3,9 @@
 #include <stdbool.h>
 
 typedef struct Mapa {
-    int id_tile;       
-    bool colisao;       
-    int linha;         
+    int id_tile;        // 0..13 conforme mapeamento definido em mapa.c
+    bool colisao;       // true para todos cercados (bordas/cantos), false p/ grama
+    int linha;
     int coluna;
 
     struct Mapa *cima;

@@ -8,7 +8,7 @@
 #define MAP_L 65
 #define MAP_C 65
 
-static Texture2D gTiles[4];
+static Texture2D gTiles[14];
 static int TILE_W = 64;
 static int TILE_H = 64;
 static Mapa **gMapa = NULL;
@@ -33,19 +33,16 @@ static inline bool TileColideIJ(int i, int j) {
 static void AplicarColisaoPosicaoJogador(Jogador *j, Vector2 posAnterior) {
     int i, jx;
     if (!WorldToGrid(j->posicao, &i, &jx)) {
-        // fora do mapa: volta
         j->posicao = posAnterior;
         return;
     }
     if (TileColideIJ(i, jx)) {
-        j->posicao = posAnterior; // volta
+        j->posicao = posAnterior;
     }
 }
 
 // Desenha apenas o que está visível no retângulo da câmera
 static void DesenharMapaVisivel(Camera2D *cam, int telaW, int telaH) {
-    // calcula AABB visível em coordenadas de mundo
-    // offset centraliza a câmera na tela, então o canto superior esquerdo do mundo é:
     Vector2 topoEsq = GetScreenToWorld2D((Vector2){0,0}, *cam);
     Vector2 botDir  = GetScreenToWorld2D((Vector2){(float)telaW,(float)telaH}, *cam);
 
@@ -61,7 +58,7 @@ static void DesenharMapaVisivel(Camera2D *cam, int telaW, int telaH) {
 
     for (int i = iIni; i <= iFim; ++i) {
         for (int j = jIni; j <= jFim; ++j) {
-            int id = gMapa[i][j].id_tile; // 0..3
+            int id = gMapa[i][j].id_tile; // 0..13
             Vector2 pos = { j * (float)TILE_W, i * (float)TILE_H };
             DrawTextureV(gTiles[id], pos, WHITE);
         }
@@ -74,22 +71,34 @@ int main(void) {
     const int largura = 1920;
     const int altura  = 1080;
 
-    InitWindow(largura, altura, "Teste de Asset do Jogador com Câmera + Mapa");
+    InitWindow(largura, altura, "Mapa 14 tiles + Jogador + Câmera");
     SetTargetFPS(60);
 
     // ----- Mapa: criar e carregar tiles -----
     gMapa = criar_mapa_encadeado(MAP_L, MAP_C);
     if (!gMapa) { CloseWindow(); return 1; }
 
-    gTiles[0] = LoadTexture("assets/tiles/cercado1.png");
-    gTiles[1] = LoadTexture("assets/tiles/cercado2.png");
-    gTiles[2] = LoadTexture("assets/tiles/grama1.png");
-    gTiles[3] = LoadTexture("assets/tiles/grama2.png");
+    // IDs 0..13 (devem bater com mapa.c)
+    gTiles[0]  = LoadTexture("assets/tiles/cercadoPonta1.png");   // topo-esq
+    gTiles[1]  = LoadTexture("assets/tiles/cercadoPonta2.png");   // topo-dir
+    gTiles[2]  = LoadTexture("assets/tiles/cercadoPonta3.png");   // baixo-esq
+    gTiles[3]  = LoadTexture("assets/tiles/cercadoPonta4.png");   // baixo-dir
+    gTiles[4]  = LoadTexture("assets/tiles/cercadoEsquerda1.png");
+    gTiles[5]  = LoadTexture("assets/tiles/cercadoEsquerda2.png");
+    gTiles[6]  = LoadTexture("assets/tiles/cercadoDireita1.png");
+    gTiles[7]  = LoadTexture("assets/tiles/cercadoDireita2.png"); // <- corrigi 'DIreita' -> 'Direita'
+    gTiles[8]  = LoadTexture("assets/tiles/cercadoCima1.png");
+    gTiles[9]  = LoadTexture("assets/tiles/cercadoCima2.png");
+    gTiles[10] = LoadTexture("assets/tiles/cercadoBaixo1.png");
+    gTiles[11] = LoadTexture("assets/tiles/cercadoBaixo2.png");
+    gTiles[12] = LoadTexture("assets/tiles/grama1.png");
+    gTiles[13] = LoadTexture("assets/tiles/grama2.png");          // <- usei grama2 para revezar
 
     // Valida carregamento e descobre tamanho do tile
-    if (gTiles[0].id == 0 || gTiles[1].id == 0 || gTiles[2].id == 0 || gTiles[3].id == 0) {
-        UnloadTexture(gTiles[0]); UnloadTexture(gTiles[1]);
-        UnloadTexture(gTiles[2]); UnloadTexture(gTiles[3]);
+    bool okTiles = true;
+    for (int t = 0; t < 14; ++t) if (gTiles[t].id == 0) okTiles = false;
+    if (!okTiles) {
+        for (int t = 0; t < 14; ++t) if (gTiles[t].id != 0) UnloadTexture(gTiles[t]);
         destruir_mapa_encadeado(gMapa, MAP_L);
         CloseWindow();
         return 1;
@@ -98,7 +107,6 @@ int main(void) {
     TILE_H = gTiles[0].height;
 
     // ----- Inicializa o jogador -----
-    // Posiciona no centro do mapa em coordenadas de mundo
     Vector2 posInicial = {
         (MAP_C * TILE_W) / 2.0f,
         (MAP_L * TILE_H) / 2.0f
@@ -116,7 +124,7 @@ int main(void) {
         "assets/personagem/personagemAndando2.png"
     );
     if (!ok) {
-        for (int k=0;k<4;++k) UnloadTexture(gTiles[k]);
+        for (int t=0; t<14; ++t) UnloadTexture(gTiles[t]);
         destruir_mapa_encadeado(gMapa, MAP_L);
         CloseWindow();
         return 1;
@@ -165,10 +173,6 @@ int main(void) {
 
             // Jogador
             DesenharJogador(&jogador);
-
-            // (Opcional) grade debug por cima:
-            // for (int j=0;j<MAP_C;++j) for (int i=0;i<MAP_L;++i)
-            //     DrawRectangleLines(j*TILE_W, i*TILE_H, TILE_W, TILE_H, Fade(WHITE, 0.05f));
         EndMode2D();
 
         // HUD (fixo na tela)
@@ -180,7 +184,7 @@ int main(void) {
 
     // ----- Cleanup -----
     DescarregarJogador(&jogador);
-    for (int k=0;k<4;++k) UnloadTexture(gTiles[k]);
+    for (int t=0; t<14; ++t) UnloadTexture(gTiles[t]);
     destruir_mapa_encadeado(gMapa, MAP_L);
     CloseWindow();
     return 0;
