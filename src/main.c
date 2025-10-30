@@ -1,133 +1,187 @@
 #include "raylib.h"
-#include <math.h>
+#include "jogador.h"
+#include "mapa.h"
+#include <stdio.h>
+#include <stdbool.h>
 
-typedef struct {
-    Vector2 pos;
-    Vector2 vel;
-    bool active;
-} Bullet;
+// ---------------------- Config do mapa ----------------------
+#define MAP_L 65
+#define MAP_C 65
 
-typedef struct {
-    Vector2 pos;
-    double spawnTime;
-    bool active;
-} AoE;
+static Texture2D gTiles[4];
+static int TILE_W = 64;
+static int TILE_H = 64;
+static Mapa **gMapa = NULL;
+
+// Converte de posição no mundo (pixels) para índice da grade
+static inline bool WorldToGrid(Vector2 pos, int *outI, int *outJ) {
+    if (pos.x < 0 || pos.y < 0) return false;
+    int j = (int)(pos.x / TILE_W);
+    int i = (int)(pos.y / TILE_H);
+    if (i < 0 || j < 0 || i >= MAP_L || j >= MAP_C) return false;
+    if (outI) *outI = i;
+    if (outJ) *outJ = j;
+    return true;
+}
+
+static inline bool TileColideIJ(int i, int j) {
+    if (i < 0 || j < 0 || i >= MAP_L || j >= MAP_C) return true; // fora do mapa = bloqueia
+    return gMapa[i][j].colisao;
+}
+
+// Colisão simples: se o centro do jogador cair em um tile de cerca, desfaz o movimento
+static void AplicarColisaoPosicaoJogador(Jogador *j, Vector2 posAnterior) {
+    int i, jx;
+    if (!WorldToGrid(j->posicao, &i, &jx)) {
+        // fora do mapa: volta
+        j->posicao = posAnterior;
+        return;
+    }
+    if (TileColideIJ(i, jx)) {
+        j->posicao = posAnterior; // volta
+    }
+}
+
+// Desenha apenas o que está visível no retângulo da câmera
+static void DesenharMapaVisivel(Camera2D *cam, int telaW, int telaH) {
+    // calcula AABB visível em coordenadas de mundo
+    // offset centraliza a câmera na tela, então o canto superior esquerdo do mundo é:
+    Vector2 topoEsq = GetScreenToWorld2D((Vector2){0,0}, *cam);
+    Vector2 botDir  = GetScreenToWorld2D((Vector2){(float)telaW,(float)telaH}, *cam);
+
+    int jIni = (int)(topoEsq.x / TILE_W) - 1;
+    int iIni = (int)(topoEsq.y / TILE_H) - 1;
+    int jFim = (int)(botDir.x  / TILE_W) + 1;
+    int iFim = (int)(botDir.y  / TILE_H) + 1;
+
+    if (jIni < 0) jIni = 0;
+    if (iIni < 0) iIni = 0;
+    if (jFim > MAP_C-1) jFim = MAP_C-1;
+    if (iFim > MAP_L-1) iFim = MAP_L-1;
+
+    for (int i = iIni; i <= iFim; ++i) {
+        for (int j = jIni; j <= jFim; ++j) {
+            int id = gMapa[i][j].id_tile; // 0..3
+            Vector2 pos = { j * (float)TILE_W, i * (float)TILE_H };
+            DrawTextureV(gTiles[id], pos, WHITE);
+        }
+    }
+}
+
+// ------------------------------------------------------------
 
 int main(void) {
-    const int largura = 1600;
-    const int altura  = 900;
+    const int largura = 1920;
+    const int altura  = 1080;
 
-    InitWindow(largura, altura, "jogoAED - Raylib: Tiros e AoE");
+    InitWindow(largura, altura, "Teste de Asset do Jogador com Câmera + Mapa");
     SetTargetFPS(60);
 
-    // Jogador
-    Vector2 player = { largura/2.0f, altura/2.0f };
-    const float playerRaio = 30.0f;
-    const float playerVel = 400.0f; // pixels/segundo
+    // ----- Mapa: criar e carregar tiles -----
+    gMapa = criar_mapa_encadeado(MAP_L, MAP_C);
+    if (!gMapa) { CloseWindow(); return 1; }
 
-    // Balas
-    #define MAX_BULLETS 512
-    Bullet bullets[MAX_BULLETS] = {0};
-    const float bulletSpeed = 700.0f; // pixels/segundo
-    const float bulletRadius = 6.0f;
-    int bulletIndex = 0;
+    gTiles[0] = LoadTexture("assets/tiles/cercado1.png");
+    gTiles[1] = LoadTexture("assets/tiles/cercado2.png");
+    gTiles[2] = LoadTexture("assets/tiles/grama1.png");
+    gTiles[3] = LoadTexture("assets/tiles/grama2.png");
 
-    // Áreas (AoE) de clique direito
-    #define MAX_AOE 32
-    AoE aoes[MAX_AOE] = {0};
-    const float aoeRadius = 90.0f;
-    const double aoeLifetime = 4.0; // segundos
-    int aoeIndex = 0;
+    // Valida carregamento e descobre tamanho do tile
+    if (gTiles[0].id == 0 || gTiles[1].id == 0 || gTiles[2].id == 0 || gTiles[3].id == 0) {
+        UnloadTexture(gTiles[0]); UnloadTexture(gTiles[1]);
+        UnloadTexture(gTiles[2]); UnloadTexture(gTiles[3]);
+        destruir_mapa_encadeado(gMapa, MAP_L);
+        CloseWindow();
+        return 1;
+    }
+    TILE_W = gTiles[0].width;
+    TILE_H = gTiles[0].height;
+
+    // ----- Inicializa o jogador -----
+    // Posiciona no centro do mapa em coordenadas de mundo
+    Vector2 posInicial = {
+        (MAP_C * TILE_W) / 2.0f,
+        (MAP_L * TILE_H) / 2.0f
+    };
+
+    Jogador jogador;
+    bool ok = IniciarJogador(
+        &jogador,
+        posInicial,
+        400.0f,   // velocidade
+        10.0f,    // fps da caminhada
+        100.0f,   // vida
+        "assets/personagem/personagemParado.png",
+        "assets/personagem/personagemAndando1.png",
+        "assets/personagem/personagemAndando2.png"
+    );
+    if (!ok) {
+        for (int k=0;k<4;++k) UnloadTexture(gTiles[k]);
+        destruir_mapa_encadeado(gMapa, MAP_L);
+        CloseWindow();
+        return 1;
+    }
+
+    // ----- Configura a câmera -----
+    Camera2D camera = {0};
+    camera.target = jogador.posicao;
+    camera.offset = (Vector2){ largura / 2.0f, altura / 2.0f };
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
+
+    Vector2 tam = TamanhoJogador(&jogador);
+    printf("Sprite atual do jogador: %.0fx%.0f\n", tam.x, tam.y);
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
 
-        // ---- Update ----
-        // Movimento do jogador (WASD)
-        if (IsKeyDown(KEY_D)) player.x += playerVel * dt;
-        if (IsKeyDown(KEY_A)) player.x -= playerVel * dt;
-        if (IsKeyDown(KEY_W)) player.y -= playerVel * dt;
-        if (IsKeyDown(KEY_S)) player.y += playerVel * dt;
+        // Guarda posição anterior para corrigir se colidir
+        Vector2 posAnterior = jogador.posicao;
 
-        // Mantém o jogador dentro da janela
-        if (player.x < playerRaio) player.x = playerRaio;
-        if (player.x > largura - playerRaio) player.x = largura - playerRaio;
-        if (player.y < playerRaio) player.y = playerRaio;
-        if (player.y > altura - playerRaio) player.y = altura - playerRaio;
+        // Atualiza jogador (movimento, animação etc.)
+        AtualizarJogador(&jogador, dt);
 
-        // Clique esquerdo: cria um projétil na direção do mouse
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            Vector2 mouse = GetMousePosition();
-            Vector2 dir = { mouse.x - player.x, mouse.y - player.y };
-            float len = sqrtf(dir.x*dir.x + dir.y*dir.y);
-            if (len > 0.0001f) {
-                dir.x /= len;
-                dir.y /= len;
-                bullets[bulletIndex].pos = player; // nasce no centro do player
-                bullets[bulletIndex].vel = (Vector2){ dir.x * bulletSpeed, dir.y * bulletSpeed };
-                bullets[bulletIndex].active = true;
-                bulletIndex = (bulletIndex + 1) % MAX_BULLETS;
-            }
-        }
+        // Colisão com tiles (checa tile sob o centro do jogador)
+        AplicarColisaoPosicaoJogador(&jogador, posAnterior);
 
-        // Clique direito: cria uma AoE que dura 4s
-        if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-            Vector2 mouse = GetMousePosition();
-            aoes[aoeIndex].pos = mouse;
-            aoes[aoeIndex].spawnTime = GetTime();
-            aoes[aoeIndex].active = true;
-            aoeIndex = (aoeIndex + 1) % MAX_AOE;
-        }
+        // Mantém o jogador dentro do mapa (clamp mundo)
+        float maxX = MAP_C * (float)TILE_W - 1.0f;
+        float maxY = MAP_L * (float)TILE_H - 1.0f;
+        if (jogador.posicao.x < 0) jogador.posicao.x = 0;
+        if (jogador.posicao.y < 0) jogador.posicao.y = 0;
+        if (jogador.posicao.x > maxX) jogador.posicao.x = maxX;
+        if (jogador.posicao.y > maxY) jogador.posicao.y = maxY;
 
-        // Atualiza balas
-        for (int i = 0; i < MAX_BULLETS; i++) {
-            if (!bullets[i].active) continue;
-            bullets[i].pos.x += bullets[i].vel.x * dt;
-            bullets[i].pos.y += bullets[i].vel.y * dt;
+        // Atualiza a câmera
+        camera.target = jogador.posicao;
 
-            // Desativa se sair da tela (com pequena margem)
-            if (bullets[i].pos.x < -50 || bullets[i].pos.x > largura + 50 ||
-                bullets[i].pos.y < -50 || bullets[i].pos.y > altura + 50) {
-                bullets[i].active = false;
-            }
-        }
-
-        // Atualiza AoEs (desativa ao expirar)
-        double now = GetTime();
-        for (int i = 0; i < MAX_AOE; i++) {
-            if (!aoes[i].active) continue;
-            if (now - aoes[i].spawnTime >= aoeLifetime) {
-                aoes[i].active = false;
-            }
-        }
-
-        // ---- Draw ----
+        // ---------- Desenho ----------
         BeginDrawing();
-            ClearBackground(RAYWHITE);
+        ClearBackground(BLACK);
 
-            DrawText("WASD para mover. Clique ESQUERDO: tiro. Clique DIREITO: AoE 4s.", 20, 20, 20, DARKGRAY);
+        BeginMode2D(camera);
+            // Mapa (apenas visível)
+            DesenharMapaVisivel(&camera, largura, altura);
 
-            // Desenhar AoEs primeiro (para ficarem sob o jogador/tiros, se quiser)
-            for (int i = 0; i < MAX_AOE; i++) {
-                if (!aoes[i].active) continue;
-                DrawCircleV(aoes[i].pos, aoeRadius, (Color){ 255, 0, 0, 120 }); // vermelho translúcido
-                DrawCircleLines((int)aoes[i].pos.x, (int)aoes[i].pos.y, aoeRadius, RED);
-            }
+            // Jogador
+            DesenharJogador(&jogador);
 
-            // Desenhar balas
-            for (int i = 0; i < MAX_BULLETS; i++) {
-                if (!bullets[i].active) continue;
-                DrawCircleV(bullets[i].pos, bulletRadius, RED);
-            }
+            // (Opcional) grade debug por cima:
+            // for (int j=0;j<MAP_C;++j) for (int i=0;i<MAP_L;++i)
+            //     DrawRectangleLines(j*TILE_W, i*TILE_H, TILE_W, TILE_H, Fade(WHITE, 0.05f));
+        EndMode2D();
 
-            // Desenhar jogador
-            DrawCircleV(player, playerRaio, SKYBLUE);
-            DrawCircleLines((int)player.x, (int)player.y, playerRaio, DARKBLUE);
+        // HUD (fixo na tela)
+        DrawText("ESC para sair", 20, 20, 20, WHITE);
+        DrawText(TextFormat("Posicao: (%.0f, %.0f)", jogador.posicao.x, jogador.posicao.y), 20, 50, 20, LIGHTGRAY);
 
-            DrawFPS(10, altura - 30);
         EndDrawing();
     }
 
+    // ----- Cleanup -----
+    DescarregarJogador(&jogador);
+    for (int k=0;k<4;++k) UnloadTexture(gTiles[k]);
+    destruir_mapa_encadeado(gMapa, MAP_L);
     CloseWindow();
     return 0;
 }
