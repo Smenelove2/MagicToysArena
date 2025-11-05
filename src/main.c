@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-// ---------------------- Config do mapa ----------------------
 #define MAP_L 65
 #define MAP_C 65
 
@@ -65,11 +64,9 @@ static void DesenharMapaVisivel(Camera2D *cam, int telaW, int telaH) {
     }
 }
 
-// ------------------------------------------------------------
-
 int main(void) {
-    const int largura = 1920;
-    const int altura  = 1080;
+    const int largura = 1000;
+    const int altura  = 800;
 
     InitWindow(largura, altura, "Mapa 14 tiles + Jogador + Câmera");
     SetTargetFPS(60);
