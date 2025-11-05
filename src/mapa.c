@@ -60,7 +60,6 @@ Mapa **criar_mapa_encadeado(int L, int C, int tile_w, int tile_h) {
         }
     }
 
-    // Preenche e liga
     for (int i = 0; i < L; ++i) {
         for (int j = 0; j < C; ++j) {
             Mapa *no = &linhas[i][j];
