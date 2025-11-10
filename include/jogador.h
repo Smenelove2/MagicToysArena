@@ -4,6 +4,8 @@
 #include "raylib.h"
 #include <stdbool.h>
 
+struct Mapa;
+
 typedef struct Jogador {
     Vector2 posicao;
     float velocidade;
@@ -17,6 +19,8 @@ typedef struct Jogador {
     float acumulador;
     bool alternarFrame;
     bool emMovimento;
+
+    struct Mapa *noAtual;
 } Jogador;
 
 bool IniciarJogador(Jogador* j,

@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-// ---------------------- Config do mapa ----------------------
 #define MAP_L 65
 #define MAP_C 65
 
@@ -59,26 +58,60 @@ static void DesenharMapaVisivel(Camera2D *cam, int telaW, int telaH) {
     for (int i = iIni; i <= iFim; ++i) {
         for (int j = jIni; j <= jFim; ++j) {
             int id = gMapa[i][j].id_tile; // 0..13
-            Vector2 pos = { j * (float)TILE_W, i * (float)TILE_H };
+            // Usa a posição em pixels armazenada no nó
+            Vector2 pos = { gMapa[i][j].posX, gMapa[i][j].posY };
             DrawTextureV(gTiles[id], pos, WHITE);
         }
     }
 }
 
+// --- NOVA FUNÇÃO ---
+// Atualiza o ponteiro 'noAtual' do jogador para o tile em que ele se encontra
+static void AtualizarNoAtualJogador(Jogador *j) {
+    int i, jx;
+    // Converte a posição de pixels do jogador para índices da grade
+    if (WorldToGrid(j->posicao, &i, &jx)) {
+        // Atualiza o ponteiro para apontar para o nó correto na matriz global
+        j->noAtual = &gMapa[i][jx];
+    } else {
+        // Se estiver fora do mapa, seta como NULL
+        j->noAtual = NULL;
+    }
+}
+
 // ------------------------------------------------------------
 
-int main(void) {
+int main() {
     const int largura = 1920;
     const int altura  = 1080;
 
-    InitWindow(largura, altura, "Mapa 14 tiles + Jogador + Câmera");
+    InitWindow(largura, altura, "Tarefa: Identificar No do Jogador");
     SetTargetFPS(60);
 
-    // ----- Mapa: criar e carregar tiles -----
-    gMapa = criar_mapa_encadeado(MAP_L, MAP_C);
-    if (!gMapa) { CloseWindow(); return 1; }
+    // ----- Mapa: Etapa 1: Descobrir tamanho do Tile -----
+    // Carrega um tile de referência (grama) primeiro
+    gTiles[12] = LoadTexture("assets/tiles/grama1.png");
+    if (gTiles[12].id == 0) {
+        printf("Erro: Não foi possível carregar tile de referência 'grama1.png'\n");
+        CloseWindow();
+        return 1;
+    }
+    // Define o tamanho global dos tiles baseado na textura carregada
+    TILE_W = gTiles[12].width;
+    TILE_H = gTiles[12].height;
+    printf("Tamanho do tile detectado: %dx%d\n", TILE_W, TILE_H);
 
-    // IDs 0..13 (devem bater com mapa.c)
+
+    // ----- Mapa: Etapa 2: Criar estrutura de dados -----
+    // Agora que TILE_W/H são conhecidos, podemos criar o mapa
+    gMapa = criar_mapa_encadeado(MAP_L, MAP_C, TILE_W, TILE_H); // <-- PASSANDO OS PARÂMETROS
+    if (!gMapa) {
+        UnloadTexture(gTiles[12]); // Libera o tile de referência
+        CloseWindow();
+        return 1;
+    }
+
+    // ----- Mapa: Etapa 3: Carregar os tiles restantes -----
     gTiles[0]  = LoadTexture("assets/tiles/cercadoPonta1.png");   // topo-esq
     gTiles[1]  = LoadTexture("assets/tiles/cercadoPonta2.png");   // topo-dir
     gTiles[2]  = LoadTexture("assets/tiles/cercadoPonta3.png");   // baixo-esq
@@ -86,25 +119,29 @@ int main(void) {
     gTiles[4]  = LoadTexture("assets/tiles/cercadoEsquerda1.png");
     gTiles[5]  = LoadTexture("assets/tiles/cercadoEsquerda2.png");
     gTiles[6]  = LoadTexture("assets/tiles/cercadoDireita1.png");
-    gTiles[7]  = LoadTexture("assets/tiles/cercadoDireita2.png"); // <- corrigi 'DIreita' -> 'Direita'
+    gTiles[7]  = LoadTexture("assets/tiles/cercadoDireita2.png");
     gTiles[8]  = LoadTexture("assets/tiles/cercadoCima1.png");
     gTiles[9]  = LoadTexture("assets/tiles/cercadoCima2.png");
     gTiles[10] = LoadTexture("assets/tiles/cercadoBaixo1.png");
     gTiles[11] = LoadTexture("assets/tiles/cercadoBaixo2.png");
-    gTiles[12] = LoadTexture("assets/tiles/grama1.png");
-    gTiles[13] = LoadTexture("assets/tiles/grama2.png");          // <- usei grama2 para revezar
+    // gTiles[12] já foi carregado
+    gTiles[13] = LoadTexture("assets/tiles/grama2.png");
 
-    // Valida carregamento e descobre tamanho do tile
+    // Valida carregamento (agora checa todos)
     bool okTiles = true;
-    for (int t = 0; t < 14; ++t) if (gTiles[t].id == 0) okTiles = false;
+    for (int t = 0; t < 14; ++t) {
+        if (gTiles[t].id == 0) {
+            printf("Erro: Falha ao carregar tile ID %d\n", t);
+            okTiles = false;
+        }
+    }
     if (!okTiles) {
         for (int t = 0; t < 14; ++t) if (gTiles[t].id != 0) UnloadTexture(gTiles[t]);
         destruir_mapa_encadeado(gMapa, MAP_L);
         CloseWindow();
         return 1;
     }
-    TILE_W = gTiles[0].width;
-    TILE_H = gTiles[0].height;
+    // TILE_W e TILE_H já foram definidos, não precisa mais
 
     // ----- Inicializa o jogador -----
     Vector2 posInicial = {
@@ -129,6 +166,13 @@ int main(void) {
         CloseWindow();
         return 1;
     }
+    
+    // --- LÓGICA ADICIONADA: Definir o nó inicial do jogador ---
+    // (IniciarJogador setou como NULL, agora atualizamos para o nó inicial)
+    AtualizarNoAtualJogador(&jogador);
+    if (jogador.noAtual) {
+        printf("Jogador iniciou no nó (%d, %d)\n", jogador.noAtual->linha, jogador.noAtual->coluna);
+    }
 
     // ----- Configura a câmera -----
     Camera2D camera = {0};
@@ -149,8 +193,21 @@ int main(void) {
         // Atualiza jogador (movimento, animação etc.)
         AtualizarJogador(&jogador, dt);
 
+        // --- LÓGICA ADICIONADA ---
+        // Identifica em qual nó da grade o jogador está agora (baseado no centro)
+        AtualizarNoAtualJogador(&jogador);
+        // --- FIM DA LÓGICA ADICIONADA ---
+
         // Colisão com tiles (checa tile sob o centro do jogador)
-        AplicarColisaoPosicaoJogador(&jogador, posAnterior);
+        // AplicarColisaoPosicaoJogador(&jogador, posAnterior); // <- Você pode descomentar isso
+        
+        // Colisão alternativa (usa o ponteiro noAtual que acabamos de atualizar)
+        if (jogador.noAtual && jogador.noAtual->colisao) {
+             jogador.posicao = posAnterior;
+             // Re-atualiza o noAtual para o nó anterior (válido)
+             AtualizarNoAtualJogador(&jogador);
+        }
+
 
         // Mantém o jogador dentro do mapa (clamp mundo)
         float maxX = MAP_C * (float)TILE_W - 1.0f;
@@ -178,6 +235,16 @@ int main(void) {
         // HUD (fixo na tela)
         DrawText("ESC para sair", 20, 20, 20, WHITE);
         DrawText(TextFormat("Posicao: (%.0f, %.0f)", jogador.posicao.x, jogador.posicao.y), 20, 50, 20, LIGHTGRAY);
+
+        // --- HUD ADICIONADO PARA DEBUG ---
+        if (jogador.noAtual) {
+            DrawText(TextFormat("No Atual: (%d, %d)", jogador.noAtual->linha, jogador.noAtual->coluna), 20, 80, 20, LIME);
+            DrawText(TextFormat("  TileID: %d", jogador.noAtual->id_tile), 20, 110, 20, LIME);
+            DrawText(TextFormat("  Colisao: %s", jogador.noAtual->colisao ? "Sim" : "Nao"), 20, 140, 20, LIME);
+            DrawText(TextFormat("  Pos (px): (%.0f, %.0f)", jogador.noAtual->posX, jogador.noAtual->posY), 20, 170, 20, LIME);
+        } else {
+            DrawText("No Atual: (Fora do Mapa)", 20, 80, 20, RED);
+        }
 
         EndDrawing();
     }

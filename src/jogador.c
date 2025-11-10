@@ -38,6 +38,8 @@ bool IniciarJogador(Jogador* j,
     j->alternarFrame = true;
     j->emMovimento   = false;
 
+    j->noAtual = NULL;
+
     return true;
 }
 

@@ -46,7 +46,8 @@ static inline bool eh_cercado(int id_tile) {
     return id_tile <= 11;
 }
 
-Mapa **criar_mapa_encadeado(int L, int C) {
+// adicionado posX e posY
+Mapa **criar_mapa_encadeado(int L, int C, int tile_w, int tile_h) {
     Mapa **linhas = (Mapa **)malloc(L * sizeof(Mapa *));
     if (!linhas) return NULL;
 
@@ -59,7 +60,6 @@ Mapa **criar_mapa_encadeado(int L, int C) {
         }
     }
 
-    // Preenche e liga
     for (int i = 0; i < L; ++i) {
         for (int j = 0; j < C; ++j) {
             Mapa *no = &linhas[i][j];
@@ -67,6 +67,10 @@ Mapa **criar_mapa_encadeado(int L, int C) {
             no->coluna = j;
             no->id_tile = escolher_id_tile(i, j, L, C);
             no->colisao = eh_cercado(no->id_tile);
+
+            // salva a posicao em pizels do canto superior esquerdo do tile
+            no->posX = (float)j * (float)tile_w;
+            no->posY = (float)i * (float)tile_h;
 
             // Vizinhanca (setaremos completa logo abaixo)
             no->cima = no->baixo = no->esquerda = no->direita = NULL;
