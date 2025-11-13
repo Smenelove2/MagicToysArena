@@ -242,6 +242,21 @@ int main() {
             DrawText(TextFormat("  TileID: %d", jogador.noAtual->id_tile), 20, 110, 20, LIME);
             DrawText(TextFormat("  Colisao: %s", jogador.noAtual->colisao ? "Sim" : "Nao"), 20, 140, 20, LIME);
             DrawText(TextFormat("  Pos (px): (%.0f, %.0f)", jogador.noAtual->posX, jogador.noAtual->posY), 20, 170, 20, LIME);
+            Vector4 distBordas = DistanciaBordasJogador(&jogador);
+    
+            DrawText(TextFormat("Dist. Bordas (Nós): CIMA:%.0f, BAIXO:%.0f, ESQ:%.0f, DIR:%.0f", distBordas.y, distBordas.w, distBordas.x, distBordas.z), 20, 200, 20, YELLOW);
+            
+            float maxDist = fmaxf(fmaxf(distBordas.x, distBordas.y), fmaxf(distBordas.z, distBordas.w));
+            
+            if (maxDist == distBordas.y) {
+                DrawText("Melhor Spawm: CIMA", 20, 230, 20, ORANGE);
+            } else if (maxDist == distBordas.w) {
+                DrawText("Melhor Spawm: BAIXO", 20, 230, 20, ORANGE);
+            } else if (maxDist == distBordas.x) {
+                DrawText("Melhor Spawm: ESQUERDA", 20, 230, 20, ORANGE);
+            } else if (maxDist == distBordas.z) {
+                DrawText("Melhor Spawm: DIREITA", 20, 230, 20, ORANGE);
+            }
         } else {
             DrawText("No Atual: (Fora do Mapa)", 20, 80, 20, RED);
         }

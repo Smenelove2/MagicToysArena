@@ -2,6 +2,9 @@
 #include <math.h>
 #include <string.h>
 
+#define MAP_L 65 
+#define MAP_C 65
+
 static inline float ComprimentoVetor(float x, float y) {
     return sqrtf(x*x + y*y);
 }
@@ -114,5 +117,26 @@ Vector2 TamanhoJogador(const Jogador* j)
         atual = j->alternarFrame ? j->andando1 : j->andando2;
 
     return (Vector2){ atual.width, atual.height };
+}
+
+Vector4 DistanciaBordasJogador(const Jogador* j) {
+    Vector4 distancias = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+    if (!j || !j->noAtual) {
+        return distancias;
+    }
+
+    const int i = j->noAtual->linha;
+    const int jx = j->noAtual->coluna;
+    
+    distancias.y = (float)i; 
+    
+    distancias.w = (float)(MAP_L - 1 - i); 
+    
+    distancias.x = (float)jx; 
+    
+    distancias.z = (float)(MAP_C - 1 - jx); 
+    
+    return distancias;
 }
 
