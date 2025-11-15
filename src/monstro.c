@@ -16,51 +16,51 @@ void CarregarAssetsMonstro(Monstro *m)
     switch (m->tipo)
     {
     case MONSTRO_ESQUELETO:
-        m->sprite1 = LoadTexture("assets/esqueleto/esqueleto1.png.png");
-        m->sprite2 = LoadTexture("assets/esqueleto/esqueleto2.png.png");
-        m->sprite3 = LoadTexture("assets/esqueleto/esqueleto3.png.png");
+        m->sprite1 = LoadTexture("assets/esqueleto/esqueleto1.png");
+        m->sprite2 = LoadTexture("assets/esqueleto/esqueleto2.png");
+        m->sprite3 = LoadTexture("assets/esqueleto/esqueleto3.png");
         break;
     case MONSTRO_ZOMBIE:
-        m->sprite1 = LoadTexture("assets/zombie/zombie1.png.png");
-        m->sprite2 = LoadTexture("assets/zombie/zombie2.png.png");
-        m->sprite3 = LoadTexture("assets/zombie/zombie3.png.png");
+        m->sprite1 = LoadTexture("assets/zombie/zombie1.png");
+        m->sprite2 = LoadTexture("assets/zombie/zombie2.png");
+        m->sprite3 = LoadTexture("assets/zombie/zombie3.png");
         break;
     case MONSTRO_URSO:
-        m->sprite1 = LoadTexture("assets/urso/urso1.png.png");
-        m->sprite2 = LoadTexture("assets/urso/urso2.png.png");
-        m->sprite3 = LoadTexture("assets/urso/urso3.png.png");
+        m->sprite1 = LoadTexture("assets/urso/urso1.png");
+        m->sprite2 = LoadTexture("assets/urso/urso2.png");
+        m->sprite3 = LoadTexture("assets/urso/urso3.png");
         break;
     case MONSTRO_IT:
-        m->sprite1 = LoadTexture("assets/IT/IT-1.png.png");
-        m->sprite2 = LoadTexture("assets/IT/IT-2.png.png");
-        m->sprite3 = LoadTexture("assets/IT/IT-3.png.png");
+        m->sprite1 = LoadTexture("assets/IT/IT-1.png");
+        m->sprite2 = LoadTexture("assets/IT/IT-2.png");
+        m->sprite3 = LoadTexture("assets/IT/IT-3.png");
         break;
     case MONSTRO_CHUCKY:
-        m->sprite1 = LoadTexture("assets/chucky/CHUCKY-1.png.png"); 
-        m->sprite2 = LoadTexture("assets/chucky/CHUCKY-2.png.png");
-        m->sprite3 = LoadTexture("assets/chucky/CHUCKY-3.png.png");
+        m->sprite1 = LoadTexture("assets/chucky/CHUCKY-1.png"); 
+        m->sprite2 = LoadTexture("assets/chucky/CHUCKY-2.png");
+        m->sprite3 = LoadTexture("assets/chucky/CHUCKY-3.png");
         break;
     case MONSTRO_MINECRAFT:
-        m->sprite1 = LoadTexture("assets/minecraft/minecraft-1.png.png");
-        m->sprite2 = LoadTexture("assets/minecraft/minecraft-2.png.png");
-        m->sprite3 = LoadTexture("assets/minecraft/minecraft-3.png.png");
+        m->sprite1 = LoadTexture("assets/minecraft/minecraft-1.png");
+        m->sprite2 = LoadTexture("assets/minecraft/minecraft-2.png");
+        m->sprite3 = LoadTexture("assets/minecraft/minecraft-3.png");
         break;
         
     case MONSTRO_ROXO:
-        m->sprite1 = LoadTexture("assets/roxo/MONSTRO-1.png.png");
-        m->sprite2 = LoadTexture("assets/roxo/MONSTRO-2.png.png");
-        m->sprite3 = LoadTexture("assets/roxo/MONSTRO-3.png.png");
+        m->sprite1 = LoadTexture("assets/roxo/MONSTRO-1.png");
+        m->sprite2 = LoadTexture("assets/roxo/MONSTRO-2.png");
+        m->sprite3 = LoadTexture("assets/roxo/MONSTRO-3.png");
         break;
 
     case MONSTRO_SUPREMO:
-        m->sprite1 = LoadTexture("assets/supremo/supremo-1.png.png");
-        m->sprite2 = LoadTexture("assets/supremo/supremo-2.png.png");
-        m->sprite3 = LoadTexture("assets/supremo/supremo-3.png.png");
+        m->sprite1 = LoadTexture("assets/supremo/supremo-1.png");
+        m->sprite2 = LoadTexture("assets/supremo/supremo-2.png");
+        m->sprite3 = LoadTexture("assets/supremo/supremo-3.png");
         break;
     default:
-        m->sprite1 = LoadTexture("assets/esqueleto/esqueleto1.png.png");
-        m->sprite2 = LoadTexture("assets/esqueleto/esqueleto2.png.png");
-        m->sprite3 = LoadTexture("assets/esqueleto/esqueleto3.png.png");
+        m->sprite1 = LoadTexture("assets/esqueleto/esqueleto1.png");
+        m->sprite2 = LoadTexture("assets/esqueleto/esqueleto2.png");
+        m->sprite3 = LoadTexture("assets/esqueleto/esqueleto3.png");
         break;
     }
 }
@@ -94,16 +94,40 @@ bool IniciarMonstro(Monstro *m,
     m->cooldownAtaque = cooldownAtaque;
     m->acumuladorAtaque = 0.0f;
 
-    m->objeto = (struct ObjetoLancavel *)malloc(sizeof(ObjetoLancavel));
-    if (!m->objeto)
-        return false;
+    m->cooldownArremesso = 2.0f; 
+    m->acumuladorArremesso = 0.0f;
+    
+    m->objeto = NULL; 
 
-    if (!IniciarObjeto(m->objeto, "assets/sprites/bone.png"))
-    {
-        free(m->objeto);
-        m->objeto = NULL;
+    if (m->tipo == MONSTRO_ESQUELETO || m->tipo == MONSTRO_IT){
+    const char* caminhoSprite = NULL;
+    
+    if (m->tipo == MONSTRO_ESQUELETO) {
+        caminhoSprite = "assets/esqueleto/pedra.png";
+    } else { 
+        caminhoSprite = "assets/IT/balao.png";
+    }
+
+    if (caminhoSprite != NULL) {
+    
+    m->objeto = (struct ObjetoLancavel *)malloc(sizeof(ObjetoLancavel));
+    if (!m->objeto){
         return false;
     }
+
+    memset(m->objeto, 0, sizeof(ObjetoLancavel));
+
+    m->objeto->dano = (m->tipo == MONSTRO_ESQUELETO) ? 10.0f : 5.0f;
+    m->objeto->velocidade = (m->tipo == MONSTRO_ESQUELETO) ? 400.0f : 200.0f;
+
+    if(!IniciarObjeto(m->objeto, caminhoSprite)){
+        free(m->objeto);
+        m->objeto = NULL; 
+    }
+    }
+} else {
+    m->objeto = NULL; 
+}
 
     return true;
 }
@@ -149,6 +173,9 @@ void AtualizarMonstro(Monstro *m, float dt)
     // Atualiza cooldown de ataque
     if (m->acumuladorAtaque > 0)
         m->acumuladorAtaque -= dt;
+
+    if (m->acumuladorArremesso > 0)
+        m->acumuladorArremesso -= dt;
 }
 
 void DesenharMonstro(const Monstro *m)
@@ -169,7 +196,7 @@ void DesenharMonstro(const Monstro *m)
         spriteAtual = m->sprite3;
         break;
     }
-
+    if (spriteAtual.id == 0) return;
     float escala = 2.0f; // Dobra o tamanho do monstro
 
     DrawTextureEx(
@@ -272,4 +299,33 @@ bool VerificarColisaoMonstroJogador(Monstro *m, struct Jogador *jogador)
 
     // Colide se a distância é menor que a soma dos raios
     return distancia < (raioColisao * 2);
+}
+
+bool TentarLancarObjeto(Monstro *m, float dt, Vector2 alvo) {
+    if (m->tipo != MONSTRO_ESQUELETO && m->tipo != MONSTRO_IT) {
+        return false;
+    }
+    
+    if (!m->objeto || m->objeto->ativo) {
+        return false; 
+    }
+    
+    float dx = alvo.x - m->posicao.x;
+    float dy = alvo.y - m->posicao.y;
+    float distancia = sqrtf(dx * dx + dy * dy);
+    
+    if (distancia > m->raioDeteccao) {
+        return false;
+    }
+    
+    if (m->acumuladorArremesso <= 0.0f) {
+        m->acumuladorArremesso = m->cooldownArremesso; 
+        
+        m->objeto->posicao = m->posicao;
+        m->objeto->direcao = (Vector2){dx / distancia, dy / distancia}; 
+        m->objeto->ativo = true;
+        
+        return true;
+    }
+    return false;
 }

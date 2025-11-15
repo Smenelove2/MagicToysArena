@@ -42,6 +42,9 @@ typedef struct Monstro
     float cooldownAtaque;
     float acumuladorAtaque;
 
+    float cooldownArremesso;
+    float acumuladorArremesso;
+
     struct ObjetoLancavel *objeto;
 } Monstro;
 
@@ -60,6 +63,8 @@ bool IniciarMonstro(Monstro *m,
 void DescarregarMonstro(Monstro *m);
 
 void CarregarAssetsMonstro(Monstro *m);
+
+bool TentarLancarObjeto(Monstro *m, float dt, Vector2 alvo);
 
 void AtualizarMonstro(Monstro *m, float dt);
 

@@ -9,6 +9,7 @@
 
 #define MAP_L 65
 #define MAP_C 65
+#define MAX_OBJETOS_VOO 50
 
 static Texture2D gTiles[14];
 static int TILE_W = 64;
@@ -229,6 +230,9 @@ int main()
     Vector2 tam = TamanhoJogador(&jogador);
     printf("Sprite atual do jogador: %.0fx%.0f\n", tam.x, tam.y);
 
+    ObjetoLancavel objetosEmVoo[MAX_OBJETOS_VOO];
+    memset(objetosEmVoo, 0, sizeof(ObjetoLancavel) * MAX_OBJETOS_VOO);
+
     while (!WindowShouldClose())
     {
         float dt = GetFrameTime();
@@ -267,9 +271,10 @@ int main()
                         monstros[i].ativo = true;
                         numMonstrosAtivos++;
 
-                        const char *nomeTipo[] = {"Esqueleto", "Zumbi", "Urso", "IT"};
-                        printf("Monstro gerado: %s na posição (%.0f, %.0f) [Total: %d]\n",
-                               nomeTipo[tipoAleatorio], pontoGerado.x, pontoGerado.y, numMonstrosAtivos);
+                        const char *nomeTipo[] = {"Esqueleto", "Zumbi", "Urso", "IT", "Chucky", "Minecraft", "Roxo", "Supremo"};
+                        if (tipoAleatorio >= 0 && tipoAleatorio < sizeof(nomeTipo) / sizeof(nomeTipo[0])) {
+                            printf("Monstro gerado: %s na posição (%.0f, %.0f) [Total: %d]\n",nomeTipo[tipoAleatorio], pontoGerado.x, pontoGerado.y, numMonstrosAtivos);
+                        }
                     }
                     break;
                 }
@@ -285,6 +290,23 @@ int main()
                 AtualizarMonstro(&monstros[i], dt);
                 // IA: Monstro persegue o jogador
                 IAAtualizarMonstro(&monstros[i], &jogador, dt);
+
+                if (monstros[i].objeto != NULL) {
+                    if (TentarLancarObjeto(&monstros[i], dt, jogador.posicao)) {
+                        // Encontra um slot livre no array de objetos em voo
+                        for (int k = 0; k < MAX_OBJETOS_VOO; k++) {
+                            if (!objetosEmVoo[k].ativo) {
+                                
+                                objetosEmVoo[k] = *monstros[i].objeto;
+                                objetosEmVoo[k].tempoVida = 0.0f;
+                                
+                                // O monstro pode usar seu objeto novamente.
+                                monstros[i].objeto->ativo = false; 
+                                break;
+                            }
+                        }
+                    }
+                }
 
                 // Colisão com jogador
                 if (VerificarColisaoMonstroJogador(&monstros[i], &jogador))
@@ -325,6 +347,21 @@ int main()
         // Atualiza a câmera
         camera.target = jogador.posicao;
 
+        for (int i = 0; i < MAX_OBJETOS_VOO; i++) {
+        if (objetosEmVoo[i].ativo) {
+            AtualizarObjeto(&objetosEmVoo[i], dt); 
+            
+            if (VerificarColisaoObjetoJogador(&objetosEmVoo[i], &jogador)) {
+                jogador.vida -= 5.0f;
+                objetosEmVoo[i].ativo = false; // Desativa objeto após colisão
+            }
+
+            if (objetosEmVoo[i].tempoVida > MAX_TEMPO) { 
+                    objetosEmVoo[i].ativo = false;
+            }
+        }
+    }
+
         // ---------- Desenho ----------
         BeginDrawing();
         ClearBackground(BLACK);
@@ -335,6 +372,12 @@ int main()
 
         // Jogador
         DesenharJogador(&jogador);
+
+        for (int i = 0; i < MAX_OBJETOS_VOO; i++){
+            if (objetosEmVoo[i].ativo){
+                DesenharObjeto(&objetosEmVoo[i]);
+            }
+        }
 
         // Todos os monstros ativos
         for (int i = 0; i < MAX_MONSTROS; i++)
