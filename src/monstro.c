@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 
 void CarregarAssetsMonstro(Monstro *m)
 {
@@ -33,6 +34,28 @@ void CarregarAssetsMonstro(Monstro *m)
         m->sprite1 = LoadTexture("assets/IT/IT-1.png.png");
         m->sprite2 = LoadTexture("assets/IT/IT-2.png.png");
         m->sprite3 = LoadTexture("assets/IT/IT-3.png.png");
+        break;
+    case MONSTRO_CHUCKY:
+        m->sprite1 = LoadTexture("assets/chucky/CHUCKY-1.png.png"); 
+        m->sprite2 = LoadTexture("assets/chucky/CHUCKY-2.png.png");
+        m->sprite3 = LoadTexture("assets/chucky/CHUCKY-3.png.png");
+        break;
+    case MONSTRO_MINECRAFT:
+        m->sprite1 = LoadTexture("assets/minecraft/minecraft-1.png.png");
+        m->sprite2 = LoadTexture("assets/minecraft/minecraft-2.png.png");
+        m->sprite3 = LoadTexture("assets/minecraft/minecraft-3.png.png");
+        break;
+        
+    case MONSTRO_ROXO:
+        m->sprite1 = LoadTexture("assets/roxo/MONSTRO-1.png.png");
+        m->sprite2 = LoadTexture("assets/roxo/MONSTRO-2.png.png");
+        m->sprite3 = LoadTexture("assets/roxo/MONSTRO-3.png.png");
+        break;
+
+    case MONSTRO_SUPREMO:
+        m->sprite1 = LoadTexture("assets/supremo/supremo-1.png.png");
+        m->sprite2 = LoadTexture("assets/supremo/supremo-2.png.png");
+        m->sprite3 = LoadTexture("assets/supremo/supremo-3.png.png");
         break;
     default:
         m->sprite1 = LoadTexture("assets/esqueleto/esqueleto1.png.png");
@@ -168,34 +191,45 @@ Vector2 GerarMonstros(struct Jogador *jogador, int mapL, int mapC, int tileW, in
     int jl = jogador->noAtual->linha;
     int jc = jogador->noAtual->coluna;
 
-    int raio = 3;
+    // Distância mínima (em tiles) do jogador para o spawn. 
+    // 15 tiles deve ser suficiente para garantir que o monstro nasça fora da tela.
+    const int DISTANCIA_MINIMA_TILES = 15; 
+    
+    // Limites de busca (a área de grama, excluindo cercas)
+    const int LINHA_MIN_MAP = 1;
+    const int LINHA_MAX_MAP = mapL - 2;
+    const int COLUNA_MIN_MAP = 1;
+    const int COLUNA_MAX_MAP = mapC - 2;
 
     int linha, coluna;
+    int maxTentativas = 300; // Aumentar tentativas para ser robusto
 
-    while (1)
+    while (maxTentativas-- > 0)
     {
-        linha = jl + GetRandomValue(-raio, raio);
-        coluna = jc + GetRandomValue(-raio, raio);
-
-        if (linha < 1)
-            linha = 1;
-        if (linha > mapL - 2)
-            linha = mapL - 2;
-
-        if (coluna < 1)
-            coluna = 1;
-        if (coluna > mapC - 2)
-            coluna = mapC - 2;
-
-        if (linha == jl && coluna == jc)
-            continue;
-
-        break;
+        // 1. Escolhe um ponto aleatório em qualquer lugar da área jogável do mapa.
+        linha = GetRandomValue(LINHA_MIN_MAP, LINHA_MAX_MAP);
+        coluna = GetRandomValue(COLUNA_MIN_MAP, COLUNA_MAX_MAP);
+        
+        // 2. Calcula a distância em tiles (dl = delta linha, dc = delta coluna)
+        int dl = abs(linha - jl);
+        int dc = abs(coluna - jc);
+        
+        // 3. O spawn só é válido se a distância em LINHA OU COLUNA for maior que a distância mínima.
+        // Isso garante que o ponto gerado está LONGE o suficiente do jogador, fora da tela.
+        if (dl >= DISTANCIA_MINIMA_TILES || dc >= DISTANCIA_MINIMA_TILES)
+        {
+            // Ponto de spawn encontrado!
+            // Converte coordenadas do nó para posição em pixels (centro do tile)
+            resultado.x = coluna * tileW + tileW / 2;
+            resultado.y = linha * tileH + tileH / 2;
+            return resultado;
+        }
     }
-
-    resultado.x = coluna * tileW + tileW / 2;
-    resultado.y = linha * tileH + tileH / 2;
-
+    
+    // Fallback de emergência (deve estar longe, no canto)
+    // Se falhar nas tentativas, força o spawn no canto superior esquerdo para garantir o afastamento.
+    resultado.x = COLUNA_MIN_MAP * tileW + tileW / 2;
+    resultado.y = LINHA_MIN_MAP * tileH + tileH / 2;
     return resultado;
 }
 

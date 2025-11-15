@@ -209,9 +209,9 @@ int main()
     // Geração progressiva de monstros (um por vez)
     Monstro monstros[MAX_MONSTROS];
     int numMonstrosAtivos = 0;  // Quantidade de monstros ativos no momento
-    int numMonstrosMaximos = 5; // Total de monstros a gerar
+    int numMonstrosMaximos = 10; // Total de monstros a gerar
     float timerGeracaoMonstro = 0.0f;
-    float intervaloGeracaoMonstro = 3.0f; // Gera um monstro a cada 3 segundos
+    float intervaloGeracaoMonstro = 2.0f; // Gera um monstro a cada 2 segundos
 
     // Inicializa array de monstros como inativos
     for (int i = 0; i < MAX_MONSTROS; i++)

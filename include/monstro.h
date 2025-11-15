@@ -14,7 +14,11 @@ typedef enum
     MONSTRO_ZOMBIE = 1,
     MONSTRO_URSO = 2,
     MONSTRO_IT = 3,
-    MONSTRO_TIPOS_COUNT = 4
+    MONSTRO_CHUCKY = 4,
+    MONSTRO_MINECRAFT = 5,
+    MONSTRO_ROXO = 6,
+    MONSTRO_SUPREMO = 7,
+    MONSTRO_TIPOS_COUNT = 8
 } TipoMonstro;
 
 typedef struct Monstro

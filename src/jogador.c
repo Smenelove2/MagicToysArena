@@ -121,22 +121,23 @@ Vector2 TamanhoJogador(const Jogador* j)
 }
 
 Vector4 DistanciaBordasJogador(const Jogador* j) {
+    // Vector4: X=Esquerda, Y=Cima, Z=Direita, W=Baixo
     Vector4 distancias = { 0.0f, 0.0f, 0.0f, 0.0f };
 
     if (!j || !j->noAtual) {
         return distancias;
     }
 
-    const int i = j->noAtual->linha;
-    const int jx = j->noAtual->coluna;
+    const int i = j->noAtual->linha; // i = Linha (Y)
+    const int jx = j->noAtual->coluna; // jx = Coluna (X)
     
-    distancias.y = (float)i; 
+    // Linhas: Cima (Y) e Baixo (W)
+    distancias.y = (float)i; // Distância do topo: Linha atual (0..i)
+    distancias.w = (float)(MAP_L - 1 - i); // Distância do baixo: (MAP_L - 1) - Linha atual
     
-    distancias.w = (float)(MAP_L - 1 - i); 
-    
-    distancias.x = (float)jx; 
-    
-    distancias.z = (float)(MAP_C - 1 - jx); 
+    // Colunas: Esquerda (X) e Direita (Z)
+    distancias.x = (float)jx; // Distância da esquerda: Coluna atual (0..jx)
+    distancias.z = (float)(MAP_C - 1 - jx); // Distância da direita: (MAP_C - 1) - Coluna atual
     
     return distancias;
 }
