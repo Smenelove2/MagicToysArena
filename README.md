@@ -69,3 +69,38 @@ jogoAED/
 
 ## 🧪 Teste rápido
 Setas movimentam um círculo na tela. `Esc` fecha o jogo.
+
+## macOS / Linux - passos detalhados
+Se estiver em macOS ou Linux, siga estes passos para garantir que o jogo compile:
+
+1. Instale dependências (macOS / Homebrew):
+
+```bash
+# Xcode Command Line Tools (macOS)
+xcode-select --install
+
+# Homebrew (se não tem): https://brew.sh
+brew install cmake pkg-config glfw
+```
+
+2. Inicialize submódulos (raylib):
+
+```bash
+git submodule update --init --recursive
+```
+
+3. Compile raylib e o jogo (use `make` agora que o projeto inclui `xMakefile`):
+
+```bash
+make setup    # inicializa o submódulo (se necessário)
+make          # compila raylib e o jogo
+make run      # executa
+```
+
+Se preferir, o comando direto para compilar apenas o demo console (sem raylib) é:
+
+```bash
+# compila demo console (usa libcurl do sistema)
+make -f ../base-raylib-w64-copy/Makefile monsters_demo
+```
+

@@ -1,4 +1,5 @@
 #include "jogador.h"
+#include "mapa.h"  
 #include <math.h>
 #include <string.h>
 

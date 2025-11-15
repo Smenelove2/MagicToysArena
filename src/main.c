@@ -2,6 +2,8 @@
 #include "jogador.h"
 #include "mapa.h"
 #include "monstro.h"
+#include <string.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -204,19 +206,18 @@ int main()
         printf("Jogador iniciou no nó (%d, %d)\n", jogador.noAtual->linha, jogador.noAtual->coluna);
     }
 
-    // Geração e inicialização de um monstro
-    Vector2 pontoGerado = GerarMonstros(&jogador, MAP_L, MAP_C, TILE_W, TILE_H);
-    Monstro m;
-    if (!IniciarMonstro(&m, pontoGerado,
-                        100, // vida
-                        60,  // velocidade
-                        8,   // fps animação
-                        150, // alcance ataque
-                        1)){
-        memset(&m, 0, sizeof(m));
-    }
-    else{
-        CarregarAssetsMonstro(&m);
+    // Geração progressiva de monstros (um por vez)
+    Monstro monstros[MAX_MONSTROS];
+    int numMonstrosAtivos = 0;  // Quantidade de monstros ativos no momento
+    int numMonstrosMaximos = 5; // Total de monstros a gerar
+    float timerGeracaoMonstro = 0.0f;
+    float intervaloGeracaoMonstro = 3.0f; // Gera um monstro a cada 3 segundos
+
+    // Inicializa array de monstros como inativos
+    for (int i = 0; i < MAX_MONSTROS; i++)
+    {
+        memset(&monstros[i], 0, sizeof(Monstro));
+        monstros[i].ativo = false;
     }
 
     Camera2D camera = {0};
@@ -235,13 +236,68 @@ int main()
         // Guarda posição anterior para corrigir se colidir
         Vector2 posAnterior = jogador.posicao;
 
-        // Atualiza jogador 
+        // Atualiza jogador
         AtualizarJogador(&jogador, dt);
 
-        // --- LOGICA ADICIONADA ---
-        // Identifica em qual nó da grade o jogador está agora (baseado no centro)
-        AtualizarNoAtualJogador(&jogador);
         // --- FIM DA LOGICA ADICIONADA ---
+
+        // --- GERACAO PROGRESSIVA DE MONSTROS ---
+        timerGeracaoMonstro += dt;
+        if (timerGeracaoMonstro >= intervaloGeracaoMonstro && numMonstrosAtivos < numMonstrosMaximos)
+        {
+            timerGeracaoMonstro = 0.0f;
+
+            // Encontra primeiro monstro inativo
+            for (int i = 0; i < MAX_MONSTROS; i++)
+            {
+                if (!monstros[i].ativo)
+                {
+                    Vector2 pontoGerado = GerarMonstros(&jogador, MAP_L, MAP_C, TILE_W, TILE_H);
+                    TipoMonstro tipoAleatorio = (TipoMonstro)GetRandomValue(0, MONSTRO_TIPOS_COUNT - 1);
+
+                    if (IniciarMonstro(&monstros[i], pontoGerado,
+                                       100, // vida
+                                       60,  // velocidade
+                                       8,   // fps animação
+                                       150, // alcance ataque
+                                       1,   // cooldown
+                                       tipoAleatorio))
+                    {
+                        CarregarAssetsMonstro(&monstros[i]);
+                        monstros[i].ativo = true;
+                        numMonstrosAtivos++;
+
+                        const char *nomeTipo[] = {"Esqueleto", "Zumbi", "Urso", "IT"};
+                        printf("Monstro gerado: %s na posição (%.0f, %.0f) [Total: %d]\n",
+                               nomeTipo[tipoAleatorio], pontoGerado.x, pontoGerado.y, numMonstrosAtivos);
+                    }
+                    break;
+                }
+            }
+        }
+        // --- FIM GERACAO PROGRESSIVA ---
+
+        // Atualiza todos os monstros (animação e cooldown)
+        for (int i = 0; i < MAX_MONSTROS; i++)
+        {
+            if (monstros[i].ativo)
+            {
+                AtualizarMonstro(&monstros[i], dt);
+                // IA: Monstro persegue o jogador
+                IAAtualizarMonstro(&monstros[i], &jogador, dt);
+
+                // Colisão com jogador
+                if (VerificarColisaoMonstroJogador(&monstros[i], &jogador))
+                {
+                    jogador.vida -= 10.0f;   // Jogador perde 10 de vida
+                    monstros[i].vida = 0.0f; // Monstro morre
+                    monstros[i].ativo = false;
+                    numMonstrosAtivos--;
+                    printf("COLISAO! Jogador atingido. Vida: %.0f | Monstros: %d\n",
+                           jogador.vida, numMonstrosAtivos);
+                }
+            }
+        }
 
         // Colisão com tiles (checa tile sob o centro do jogador)
         // AplicarColisaoPosicaoJogador(&jogador, posAnterior); // <- Você pode descomentar isso
@@ -279,19 +335,30 @@ int main()
 
         // Jogador
         DesenharJogador(&jogador);
+
+        // Todos os monstros ativos
+        for (int i = 0; i < MAX_MONSTROS; i++)
+        {
+            if (monstros[i].ativo)
+            {
+                DesenharMonstro(&monstros[i]);
+            }
+        }
         EndMode2D();
 
         // HUD (fixo na tela)
         DrawText("ESC para sair", 20, 20, 20, WHITE);
-        DrawText(TextFormat("Posicao: (%.0f, %.0f)", jogador.posicao.x, jogador.posicao.y), 20, 50, 20, LIGHTGRAY);
+        DrawText(TextFormat("Vida: %.0f", jogador.vida), 20, 50, 20, RED);
+        DrawText(TextFormat("Monstros Ativos: %d/%d", numMonstrosAtivos, numMonstrosMaximos), 20, 80, 20, YELLOW);
+        DrawText(TextFormat("Posicao: (%.0f, %.0f)", jogador.posicao.x, jogador.posicao.y), 20, 110, 20, LIGHTGRAY);
 
         // --- HUD ADICIONADO PARA DEBUG ---
         if (jogador.noAtual)
         {
-            DrawText(TextFormat("No Atual: (%d, %d)", jogador.noAtual->linha, jogador.noAtual->coluna), 20, 80, 20, LIME);
-            DrawText(TextFormat("  TileID: %d", jogador.noAtual->id_tile), 20, 110, 20, LIME);
-            DrawText(TextFormat("  Colisao: %s", jogador.noAtual->colisao ? "Sim" : "Nao"), 20, 140, 20, LIME);
-            DrawText(TextFormat("  Pos (px): (%.0f, %.0f)", jogador.noAtual->posX, jogador.noAtual->posY), 20, 170, 20, LIME);
+            DrawText(TextFormat("No Atual: (%d, %d)", jogador.noAtual->linha, jogador.noAtual->coluna), 20, 140, 20, LIME);
+            DrawText(TextFormat("  TileID: %d", jogador.noAtual->id_tile), 20, 170, 20, LIME);
+            DrawText(TextFormat("  Colisao: %s", jogador.noAtual->colisao ? "Sim" : "Nao"), 20, 200, 20, LIME);
+            DrawText(TextFormat("  Pos (px): (%.0f, %.0f)", jogador.noAtual->posX, jogador.noAtual->posY), 20, 230, 20, LIME);
             Vector4 distBordas = DistanciaBordasJogador(&jogador);
 
             DrawText(TextFormat("Dist. Bordas (Nós): CIMA:%.0f, BAIXO:%.0f, ESQ:%.0f, DIR:%.0f", distBordas.y, distBordas.w, distBordas.x, distBordas.z), 20, 200, 20, YELLOW);
@@ -324,7 +391,10 @@ int main()
     }
 
     // ----- Cleanup -----
-    DescarregarMonstro(&m);
+    for (int i = 0; i < MAX_MONSTROS; i++)
+    {
+        DescarregarMonstro(&monstros[i]);
+    }
     DescarregarJogador(&jogador);
     for (int t = 0; t < 14; ++t)
         UnloadTexture(gTiles[t]);
