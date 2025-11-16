@@ -272,7 +272,7 @@ void IAAtualizarMonstro(Monstro *m, struct Jogador *jogador, float dt)
     float distancia = sqrtf(dx * dx + dy * dy);
     
     if (distancia <= 0.01f) {
-        return false;
+        return;
     }
 
     // Se o jogador está dentro do raio de detecção, move em sua direção
