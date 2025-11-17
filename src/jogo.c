@@ -165,18 +165,25 @@ static void DesativarMonstro(EstadoJogo *estado, Monstro *monstro, bool conceder
     if (estado->monstrosAtivos > 0) estado->monstrosAtivos--;
 }
 
-static bool PontoDentroDoCone(Vector2 ponto, const EfeitoVisualArmaPrincipal *efeito)
+static bool PontoDentroDoCone(Vector2 ponto, float raioExtra, const EfeitoVisualArmaPrincipal *efeito)
 {
     Vector2 delta = { ponto.x - efeito->origem.x, ponto.y - efeito->origem.y };
     float distancia = ComprimentoV2(delta);
     float alcance = (efeito->alcance > 0.0f) ? efeito->alcance : 1.0f;
-    if (distancia > alcance) return false;
-    Vector2 direcaoPonto = NormalizarV2(delta);
-    float dot = ProdutoEscalar(direcaoPonto, efeito->direcao);
+    if (distancia <= 0.0001f) return true;
+    if (distancia - raioExtra > alcance) return false;
+    Vector2 direcaoPonto = (Vector2){ delta.x / distancia, delta.y / distancia };
+    Vector2 direcaoCone = NormalizarV2(efeito->direcao);
+    float dot = ProdutoEscalar(direcaoPonto, direcaoCone);
     if (dot > 1.0f) dot = 1.0f;
     if (dot < -1.0f) dot = -1.0f;
     float angulo = acosf(dot) * RAD2DEG;
-    return angulo <= (efeito->coneAberturaGraus * 0.5f);
+    float meiaAbertura = efeito->coneAberturaGraus * 0.5f;
+    if (raioExtra > 0.0f && distancia > 0.0001f) {
+        float ajuste = asinf(fminf(raioExtra / distancia, 1.0f)) * RAD2DEG;
+        meiaAbertura += ajuste;
+    }
+    return angulo <= meiaAbertura;
 }
 
 static bool PontoDentroDoEfeito(const Monstro *monstro, const EfeitoVisualArmaPrincipal *efeito)
@@ -187,7 +194,7 @@ static bool PontoDentroDoEfeito(const Monstro *monstro, const EfeitoVisualArmaPr
 
     switch (efeito->formato) {
         case TIPO_AREA_CONE:
-            return PontoDentroDoCone(pos, efeito);
+            return PontoDentroDoCone(pos, raioMonstro, efeito);
         case TIPO_AREA_PONTO: {
             float raio = (efeito->raio > 0.0f) ? efeito->raio : 32.0f;
             return ComprimentoV2((Vector2){ pos.x - efeito->destino.x, pos.y - efeito->destino.y }) <= (raio + raioMonstro);
@@ -306,13 +313,17 @@ static void AtualizarProjetilRaygun(EstadoJogo *estado, float dt)
     if (!estado || !estado->projetilRaygun.ativo) return;
     estado->projetilRaygun.posicao.x += estado->projetilRaygun.velocidade.x * dt;
     estado->projetilRaygun.posicao.y += estado->projetilRaygun.velocidade.y * dt;
+    const ArmaPrincipal *armaProj = estado->projetilRaygun.arma;
+    float raioAcerto = (armaProj && armaProj->raioProjetilColisao > 0.0f)
+                       ? armaProj->raioProjetilColisao
+                       : 18.0f;
     for (int i = 0; i < MAX_MONSTROS; ++i) {
         Monstro *monstro = &estado->monstros[i];
         if (!monstro->ativo) continue;
         float distancia = ComprimentoV2((Vector2){ monstro->posicao.x - estado->projetilRaygun.posicao.x,
                                                    monstro->posicao.y - estado->projetilRaygun.posicao.y });
-        if (distancia <= 18.0f) {
-            float dano = estado->projetilRaygun.arma ? estado->projetilRaygun.arma->danoBase : 0.0f;
+        if (distancia <= raioAcerto) {
+            float dano = armaProj ? armaProj->danoBase : 0.0f;
             monstro->vida -= dano;
             if (monstro->vida <= 0.0f) {
                 DesativarMonstro(estado, monstro, true);
@@ -601,7 +612,14 @@ void JogoDesenhar(EstadoJogo *estado,
         DesenharEfeitoArmaPrincipal(&estado->efeitoArmaPrincipal);
         UI_DesenharEfeitoArmaSecundaria(&estado->armaSecundaria, jogador->posicao);
         if (estado->projetilRaygun.ativo) {
-            DrawCircleV(estado->projetilRaygun.posicao, 6.0f, SKYBLUE);
+            const ArmaPrincipal *armaProj = estado->projetilRaygun.arma;
+            float raioVisual = (armaProj && armaProj->raioProjetilVisual > 0.0f)
+                               ? armaProj->raioProjetilVisual
+                               : 6.0f;
+            Color corProjetil = (armaProj && armaProj->corProjetil.a != 0)
+                                ? armaProj->corProjetil
+                                : SKYBLUE;
+            DrawCircleV(estado->projetilRaygun.posicao, raioVisual, corProjetil);
         }
         DesenharJogador(jogador);
         if (capaceteAtual) {

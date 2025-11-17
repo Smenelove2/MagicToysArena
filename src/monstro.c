@@ -236,9 +236,15 @@ void IAAtualizarMonstro(Monstro *m, struct Jogador *jogador, float dt)
         return;
 
     bool ehArqueiro = (m->tipo == MONSTRO_ESQUELETO || m->tipo == MONSTRO_IT);
-    const float LIMITE_PARADA_ARQUEIRO = 140.0f;
-    if (ehArqueiro && distancia <= LIMITE_PARADA_ARQUEIRO) {
-        return;
+    if (ehArqueiro) {
+        const float margemSeguranca = 25.0f;
+        float alcanceParada = (m->alcanceAtaque > margemSeguranca)
+                              ? m->alcanceAtaque - margemSeguranca
+                              : m->alcanceAtaque;
+        if (alcanceParada < 150.0f) alcanceParada = 150.0f;
+        if (distancia <= alcanceParada) {
+            return;
+        }
     }
 
     float dirX = dx / distancia;

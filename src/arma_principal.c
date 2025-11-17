@@ -14,34 +14,40 @@ ArmaPrincipal gArmasPrincipais[] = {
         .ataqueEmArea = true,
         .formatoArea = TIPO_AREA_CONE,
         .tipoDisparo = TIPO_DISPARO_AUTOMATICO,
-        .alcanceMaximo = 130.0f,
-        .danoBase = 90.0f,
-        .tempoRecarga = 0.9f,
+        .alcanceMaximo = 150.0f,
+        .danoBase = 20.0f,
+        .tempoRecarga = 0.2f,
         .tempoRecargaRestante = 0.0f,
-        .aberturaConeGraus = 110.0f,
+        .aberturaConeGraus = 80.0f,
         .spriteBase = "EspadadeDiamante",
         .offsetFrame1 = (Vector2){0.0f, 0.0f},
         .offsetFrame2 = (Vector2){0.0f, 0.0f},
-        .danoBaseOriginal = 90.0f,
-        .tempoRecargaOriginal = 0.9f,
+        .corEfeito = (Color){70, 130, 255, 255},
+        .danoBaseOriginal = 45.0f,
+        .tempoRecargaOriginal = 0.2f,
     },
     {
         .nome = "RayGun",
-        .descricao = "Dispara projeteis rapidos que explodem ao atingir inimigos.",
+        .descricao = "Dispara projeteis rapidos com dano massivo ao atingir o inimigo.",
         .alcance = TIPO_ALCANCE_DISTANCIA,
         .ataqueEmArea = false,
         .formatoArea = TIPO_AREA_NENHUMA,
         .tipoDisparo = TIPO_DISPARO_AUTOMATICO,
-        .alcanceMaximo = 450.0f,
-        .danoBase = 220.0f,
-        .tempoRecarga = 0.5f,
+        .alcanceMaximo = 400.0f,
+        .danoBase = 200.0f,
+        .tempoRecarga = 0.4f,
         .tempoRecargaRestante = 0.0f,
         .aberturaConeGraus = 0.0f,
         .spriteBase = "Raygun",
         .offsetFrame1 = (Vector2){6.0f, 0.0f},
         .offsetFrame2 = (Vector2){4.0f, 0.0f},
-        .danoBaseOriginal = 220.0f,
-        .tempoRecargaOriginal = 1.1f,
+        .larguraLinha = 24.0f,
+        .corEfeito = (Color){60, 0, 90, 255},
+        .corProjetil = (Color){70, 0, 110, 255},
+        .raioProjetilVisual = 8.0f,
+        .raioProjetilColisao = 22.0f,
+        .danoBaseOriginal = 200.0f,
+        .tempoRecargaOriginal = 0.4f,
     },
     {
         .nome = "Varinha da Fada Madrinha",
@@ -50,16 +56,18 @@ ArmaPrincipal gArmasPrincipais[] = {
         .ataqueEmArea = false,
         .formatoArea = TIPO_AREA_PONTO,
         .tipoDisparo = TIPO_DISPARO_POINT_CLICK,
-        .alcanceMaximo = 350.0f,
-        .danoBase = 75.0f,
-        .tempoRecarga = 1.1f,
+        .alcanceMaximo = 450.0f,
+        .danoBase = 100.0f,
+        .tempoRecarga = 1.0f,
         .tempoRecargaRestante = 0.0f,
         .aberturaConeGraus = 0.0f,
         .spriteBase = "VarinhadaFadaMadrinha",
         .offsetFrame1 = (Vector2){0.0f, 0.0f},
         .offsetFrame2 = (Vector2){0.0f, 0.0f},
-        .danoBaseOriginal = 75.0f,
-        .tempoRecargaOriginal = 1.1f,
+        .raioArea = 37.0f,
+        .corEfeito = (Color){255, 160, 0, 255},
+        .danoBaseOriginal = 100.0f,
+        .tempoRecargaOriginal = 1.0f,
     },
     {
         .nome = "Laco da Verdade",
@@ -68,17 +76,18 @@ ArmaPrincipal gArmasPrincipais[] = {
         .ataqueEmArea = true,
         .formatoArea = TIPO_AREA_LINHA,
         .tipoDisparo = TIPO_DISPARO_AUTOMATICO,
-        .alcanceMaximo = 250.0f,
-        .danoBase = 65.0f,
-        .tempoRecarga = 1.0f,
+        .alcanceMaximo = 200.0f,
+        .danoBase = 40.0f,
+        .tempoRecarga = 0.8f,
         .tempoRecargaRestante = 0.0f,
         .aberturaConeGraus = 0.0f,
         .spriteBase = "LacodaVerdade",
         .offsetFrame1 = (Vector2){0.0f, 0.0f},
         .offsetFrame2 = (Vector2){0.0f, 0.0f},
-        .larguraLinha = 27.0f,
-        .danoBaseOriginal = 65.0f,
-        .tempoRecargaOriginal = 1.0f,
+        .larguraLinha = 30.0f,
+        .corEfeito = (Color){255, 140, 0, 255},
+        .danoBaseOriginal = 50.0f,
+        .tempoRecargaOriginal = 0.8f,
     },
 };
 
@@ -225,11 +234,6 @@ bool PodeAtacarArmaPrincipal(const ArmaPrincipal *arma) {
     return arma && arma->tempoRecargaRestante <= 0.0f;
 }
 
-static Color CorParaFormato(TipoAreaArma formato) {
-    (void)formato;
-    return BLUE;
-}
-
 void GerarEfeitoArmaPrincipal(const ArmaPrincipal *arma, Vector2 origem, Vector2 destino,
                               Vector2 direcao, EfeitoVisualArmaPrincipal *efeito) {
     if (!arma || !efeito) return;
@@ -242,18 +246,19 @@ void GerarEfeitoArmaPrincipal(const ArmaPrincipal *arma, Vector2 origem, Vector2
     efeito->direcao = direcao;
     efeito->alcance = arma->alcanceMaximo;
     efeito->tempoRestante = 0.05f;
-    efeito->larguraLinha = (arma->larguraLinha > 0.0f) ? arma->larguraLinha : 18.0f;
+    float larguraPadrao = (arma->larguraLinha > 0.0f) ? arma->larguraLinha : 18.0f;
+    efeito->larguraLinha = larguraPadrao;
     efeito->coneAberturaGraus = (arma->aberturaConeGraus > 0.0f) ? arma->aberturaConeGraus : 55.0f;
-    efeito->raio = 32.0f;
-    efeito->cor = CorParaFormato(arma->formatoArea);
+    efeito->raio = (arma->raioArea > 0.0f) ? arma->raioArea : 32.0f;
+    efeito->cor = (arma->corEfeito.a != 0) ? arma->corEfeito : BLUE;
 
     switch (arma->formatoArea) {
         case TIPO_AREA_PONTO:
-            efeito->raio = 32.0f;
+            efeito->raio = (arma->raioArea > 0.0f) ? arma->raioArea : 32.0f;
             break;
         case TIPO_AREA_LINHA:
         case TIPO_AREA_NENHUMA:
-            efeito->larguraLinha = 18.0f;
+            efeito->larguraLinha = larguraPadrao;
             break;
         case TIPO_AREA_CONE:
             efeito->alcance = arma->alcanceMaximo;

@@ -11,7 +11,7 @@ Capacete gCapacetes[] = {
         .descricao = "Amplia a regeneracao de vida por segundo.",
         .spriteBase = "CabeloRapunzel",
         .modificador = {
-            .bonusRegeneracaoVida = 0.35f,
+            .bonusRegeneracaoVida = 1.0f,
         },
     },
     {
@@ -19,7 +19,7 @@ Capacete gCapacetes[] = {
         .descricao = "Potencializa o dano causado pelas armas.",
         .spriteBase = "ChapeuGandalf",
         .modificador = {
-            .bonusDanoArmas = 0.30f,
+            .bonusDanoArmas = 0.35f,
         },
     },
     {
@@ -27,7 +27,7 @@ Capacete gCapacetes[] = {
         .descricao = "Aumenta a vida maxima em porcentagem.",
         .spriteBase = "PaneladoMeninoMaluquinho",
         .modificador = {
-            .bonusVidaMaxima = 0.20f,
+            .bonusVidaMaxima = 0.5f,
         },
     },
 };

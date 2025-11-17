@@ -12,9 +12,9 @@ Armadura gArmaduras[] = {
         .spriteBase = "RoupadoMiranha",
         .modificador = {
             .statusBeneficio = STATUS_VELOCIDADE,
-            .valorBeneficio = 60,
+            .valorBeneficio = 80,
             .statusPenalidade = STATUS_VIDA_MAXIMA,
-            .valorPenalidade = 10,
+            .valorPenalidade = 40,
         },
     },
     {
@@ -23,9 +23,9 @@ Armadura gArmaduras[] = {
         .spriteBase = "CasacodoSully",
         .modificador = {
             .statusBeneficio = STATUS_VIDA_MAXIMA,
-            .valorBeneficio = 20,
+            .valorBeneficio = 150,
             .statusPenalidade = STATUS_VELOCIDADE,
-            .valorPenalidade = 40,
+            .valorPenalidade = 120,
         },
     },
     {
@@ -34,9 +34,9 @@ Armadura gArmaduras[] = {
         .spriteBase = "VestidodaPrincesaSofia",
         .modificador = {
             .statusBeneficio = STATUS_VIDA_MAXIMA,
-            .valorBeneficio = 25,
+            .valorBeneficio = 150,
             .statusPenalidade = STATUS_DANO,
-            .valorPenalidade = 8,
+            .valorPenalidade = 20,
         },
     },
     {
@@ -45,9 +45,9 @@ Armadura gArmaduras[] = {
         .spriteBase = "ArmaduradoMasterChief",
         .modificador = {
             .statusBeneficio = STATUS_DANO,
-            .valorBeneficio = 12,
+            .valorBeneficio = 35,
             .statusPenalidade = STATUS_VELOCIDADE,
-            .valorPenalidade = 48,
+            .valorPenalidade = 120,
         },
     },
 };

@@ -40,6 +40,11 @@ typedef struct {
     Vector2 offsetFrame1;
     Vector2 offsetFrame2;
     float larguraLinha;
+    float raioArea;
+    Color corEfeito;
+    Color corProjetil;
+    float raioProjetilVisual;
+    float raioProjetilColisao;
     float danoBaseOriginal;
     float tempoRecargaOriginal;
 } ArmaPrincipal;
