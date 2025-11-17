@@ -1,4 +1,4 @@
-# jogoAED 🧸⚔️
+# Magic Toys Arena🧸⚔️
 
 Projeto 2D feito em **C + Raylib** onde você seleciona equipamentos (capacete, armadura, armas principal/secundária) antes de entrar no combate contra ondas de monstros.
 
