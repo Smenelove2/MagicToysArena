@@ -25,6 +25,7 @@ void Equipamento_DescricaoEStatus(CategoriaEquipamento cat, size_t indice,
                                   char *status, size_t tamStatus);
 void Equipamento_AjustarIndice(CategoriaEquipamento cat, int delta, size_t indices[CAT_TOTAL]);
 float AtualizarVidaJogadorComEquipamentos(Jogador *j, const Armadura *arm,
-                                          const Capacete *cap, float vidaBase);
+                                          const Capacete *cap, float vidaBase,
+                                          ArmaPrincipal *armaPrincipal);
 
 #endif

@@ -21,6 +21,7 @@ bool IniciarJogador(Jogador* j,
 
     j->posicao    = posInicial;
     j->velocidade = velocidade;
+    j->velocidadeBase = velocidade;
     j->vida       = vida;
     j->vidaMaxima = vida;
     j->regeneracaoBase = 2.0f;

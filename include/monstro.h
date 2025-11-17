@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 struct ObjetoLancavel;
+struct MonstroInfo;
 struct Jogador;
 
 // Enum para tipos de monstros
@@ -12,11 +13,11 @@ typedef enum
 {
     MONSTRO_ESQUELETO = 0,
     MONSTRO_ZOMBIE = 1,
-    MONSTRO_URSO = 2,
+    MONSTRO_TIBBERS = 2,
     MONSTRO_IT = 3,
     MONSTRO_CHUCKY = 4,
-    MONSTRO_MINECRAFT = 5,
-    MONSTRO_ROXO = 6,
+    MONSTRO_HEROBRINE = 5,
+    MONSTRO_RANDALL = 6,
     MONSTRO_SUPREMO = 7,
     MONSTRO_TIPOS_COUNT = 8
 } TipoMonstro;
@@ -25,6 +26,7 @@ typedef struct Monstro
 {
     Vector2 posicao;
     float vida;
+    float vidaMaxima;
     float velocidade;
     TipoMonstro tipo;
     bool ativo; // Indica se o monstro está vivo/ativo
@@ -38,9 +40,10 @@ typedef struct Monstro
     int frameAtual;
 
     float alcanceAtaque;
-    float raioDeteccao; // Raio em pixels para detectar o jogador
     float cooldownAtaque;
     float acumuladorAtaque;
+    float danoContato;
+    int pontuacao;
 
     float cooldownArremesso;
     float acumuladorArremesso;
@@ -49,16 +52,11 @@ typedef struct Monstro
 } Monstro;
 
 // Define número máximo de monstros simultâneos
-#define MAX_MONSTROS 10
+#define MAX_MONSTROS 100
 
 bool IniciarMonstro(Monstro *m,
                     Vector2 posInicial,
-                    float vida,
-                    float velocidade,
-                    float fpsAnimacao,
-                    float alcanceAtaque,
-                    float cooldownAtaque,
-                    TipoMonstro tipo);
+                    const struct MonstroInfo *info);
 
 void DescarregarMonstro(Monstro *m);
 
@@ -70,7 +68,7 @@ void AtualizarMonstro(Monstro *m, float dt);
 
 void DesenharMonstro(const Monstro *m);
 
-// IA: Move o monstro em direção ao jogador se estiver no raio de detecção
+// IA: Move o monstro constantemente em direção ao jogador
 void IAAtualizarMonstro(Monstro *m, struct Jogador *jogador, float dt);
 
 // Colisão: Retorna true se o monstro colidiu com o jogador

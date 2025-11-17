@@ -12,7 +12,7 @@ Armadura gArmaduras[] = {
         .spriteBase = "RoupadoMiranha",
         .modificador = {
             .statusBeneficio = STATUS_VELOCIDADE,
-            .valorBeneficio = 15,
+            .valorBeneficio = 60,
             .statusPenalidade = STATUS_VIDA_MAXIMA,
             .valorPenalidade = 10,
         },
@@ -25,7 +25,7 @@ Armadura gArmaduras[] = {
             .statusBeneficio = STATUS_VIDA_MAXIMA,
             .valorBeneficio = 20,
             .statusPenalidade = STATUS_VELOCIDADE,
-            .valorPenalidade = 10,
+            .valorPenalidade = 40,
         },
     },
     {
@@ -47,7 +47,7 @@ Armadura gArmaduras[] = {
             .statusBeneficio = STATUS_DANO,
             .valorBeneficio = 12,
             .statusPenalidade = STATUS_VELOCIDADE,
-            .valorPenalidade = 12,
+            .valorPenalidade = 48,
         },
     },
 };

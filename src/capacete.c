@@ -23,14 +23,6 @@ Capacete gCapacetes[] = {
         },
     },
     {
-        .nome = "Chapeu do Woody",
-        .descricao = "Reduz o tempo de recarga das armas.",
-        .spriteBase = "ChapeudoWoody",
-        .modificador = {
-            .reducaoTempoRecarga = 0.25f,
-        },
-    },
-    {
         .nome = "Panela do Menino Maluquinho",
         .descricao = "Aumenta a vida maxima em porcentagem.",
         .spriteBase = "PaneladoMeninoMaluquinho",

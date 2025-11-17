@@ -14,8 +14,9 @@ typedef struct ObjetoLancavel {
     bool ativo; 
 
     float tempoVida;
-    
-    Texture2D sprite; 
+
+    char caminhoSprite[128];
+    Texture2D sprite;
 } ObjetoLancavel;
 
 bool IniciarObjeto(ObjetoLancavel* o, const char* caminhoSprite);

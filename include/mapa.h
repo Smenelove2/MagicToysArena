@@ -27,6 +27,7 @@ bool TilePossuiColisao(Mapa **mapa, int linhas, int colunas, int i, int j);
 void DesenharMapaVisivel(Camera2D *camera, int telaLargura, int telaAltura,
                          Mapa **mapa, int linhas, int colunas,
                          Texture2D *tiles, int quantidadeTiles,
-                         int tileLargura, int tileAltura);
+                         int tileLargura, int tileAltura,
+                         int idTileForaMapa);
 
 #endif

@@ -16,7 +16,7 @@ void MenuInicializarEstado(EstadoMenu *estado)
 }
 
 AcaoMenu MenuDesenharTelaInicial(const EstadoMenu *estado, Vector2 mousePos, bool mouseClick,
-                                 Font fonteBold, Font fonteBoldPequena, int largura, int altura)
+                                 Font fonteBold, int largura, int altura)
 {
     (void)estado;
     AcaoMenu acao = MENU_ACAO_NENHUMA;
@@ -44,10 +44,7 @@ AcaoMenu MenuDesenharTelaInicial(const EstadoMenu *estado, Vector2 mousePos, boo
 
     if (UI_BotaoTexto(btnLeaderboard, "Leaderboard", mousePos, mouseClick,
                       (Color){70, 70, 120, 255}, (Color){180, 180, 230, 255}, fonteBold, true)) {
-        DrawTextEx(fonteBoldPequena, "Em breve!",
-                   (Vector2){ btnLeaderboard.x + 10.0f * escalaUI,
-                              btnLeaderboard.y + btnLeaderboard.height + 15.0f * escalaUI },
-                   UI_AjustarTamanhoFonte(18.0f), 1.0f, YELLOW);
+        acao = MENU_ACAO_LEADERBOARD;
     }
 
     if (UI_BotaoTexto(btnSair, "Sair", mousePos, mouseClick,
@@ -166,7 +163,7 @@ ResultadoMenu MenuDesenharTelaConfig(EstadoMenu *estado,
     DrawTextEx(fonteNormal, desc, (Vector2){ descArea.x, descArea.y },
                UI_AjustarTamanhoFonte(34.0f), 1.0f, LIGHTGRAY);
     if (status[0] != '\0') {
-        float inicioY = painelDir.y + painelDir.height * 0.42f;
+        float inicioY = painelDir.y + painelDir.height * 0.29f;
         float centroX = painelDir.x + painelDir.width / 2;
         const char *ptr = status;
         char linha[128];

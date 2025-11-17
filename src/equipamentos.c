@@ -1,6 +1,7 @@
 #include "equipamentos.h"
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 static const char *NomeStatusArmadura(TipoStatusArmadura status)
 {
@@ -176,26 +177,82 @@ void Equipamento_AjustarIndice(CategoriaEquipamento cat, int delta, size_t indic
     indices[cat] = (size_t)atual;
 }
 
+static float ClampPercent(float valor)
+{
+    if (valor < -0.95f) return -0.95f;
+    return valor;
+}
+
 float AtualizarVidaJogadorComEquipamentos(Jogador *j, const Armadura *arm,
-                                          const Capacete *cap, float vidaBase)
+                                          const Capacete *cap, float vidaBase,
+                                          ArmaPrincipal *armaPrincipal)
 {
     if (!j) return 0.0f;
     if (vidaBase <= 0.0f) vidaBase = (j->vidaMaxima > 0.0f) ? j->vidaMaxima : 100.0f;
-    float percentual = 0.0f;
+    float vidaFlat = 0.0f;
+    float velFlat = 0.0f;
+    float danoFlat = 0.0f;
+    float reducaoRecarga = 0.0f;
+
+    if (arm) {
+        switch (arm->modificador.statusBeneficio) {
+            case STATUS_VIDA_MAXIMA:
+                vidaFlat += (float)arm->modificador.valorBeneficio;
+                break;
+            case STATUS_VELOCIDADE:
+                velFlat += (float)arm->modificador.valorBeneficio;
+                break;
+            case STATUS_DANO:
+                danoFlat += (float)arm->modificador.valorBeneficio;
+                break;
+            default: break;
+        }
+        switch (arm->modificador.statusPenalidade) {
+            case STATUS_VIDA_MAXIMA:
+                vidaFlat -= (float)arm->modificador.valorPenalidade;
+                break;
+            case STATUS_VELOCIDADE:
+                velFlat -= (float)arm->modificador.valorPenalidade;
+                break;
+            case STATUS_DANO:
+                danoFlat -= (float)arm->modificador.valorPenalidade;
+                break;
+            default: break;
+        }
+    }
+
+    float vidaComArmadura = vidaBase + vidaFlat;
+    if (vidaComArmadura < 1.0f) vidaComArmadura = 1.0f;
 
     if (cap) {
-        percentual += cap->modificador.bonusVidaMaxima;
+        reducaoRecarga += cap->modificador.reducaoTempoRecarga;
     }
-    if (arm) {
-        if (arm->modificador.statusBeneficio == STATUS_VIDA_MAXIMA) {
-            percentual += arm->modificador.valorBeneficio / 100.0f;
+
+    if (armaPrincipal) {
+        float danoBase = armaPrincipal->danoBaseOriginal > 0.0f ? armaPrincipal->danoBaseOriginal : armaPrincipal->danoBase;
+        danoBase += danoFlat;
+        if (cap) {
+            danoBase *= (1.0f + cap->modificador.bonusDanoArmas);
         }
-        if (arm->modificador.statusPenalidade == STATUS_VIDA_MAXIMA) {
-            percentual -= arm->modificador.valorPenalidade / 100.0f;
+        if (danoBase < 1.0f) danoBase = 1.0f;
+        armaPrincipal->danoBase = danoBase;
+
+        float tempoBase = armaPrincipal->tempoRecargaOriginal > 0.0f ? armaPrincipal->tempoRecargaOriginal : armaPrincipal->tempoRecarga;
+        float fatorRecarga = 1.0f - ClampPercent(reducaoRecarga);
+        if (fatorRecarga < 0.05f) fatorRecarga = 0.05f;
+        armaPrincipal->tempoRecarga = tempoBase * fatorRecarga;
+        if (armaPrincipal->tempoRecargaRestante > armaPrincipal->tempoRecarga) {
+            armaPrincipal->tempoRecargaRestante = armaPrincipal->tempoRecarga;
         }
     }
 
-    float novaMax = vidaBase * (1.0f + percentual);
+    j->velocidade = j->velocidadeBase + velFlat;
+    if (j->velocidade < 50.0f) j->velocidade = 50.0f;
+
+    float novaMax = vidaComArmadura;
+    if (cap && cap->modificador.bonusVidaMaxima != 0.0f) {
+        novaMax *= (1.0f + cap->modificador.bonusVidaMaxima);
+    }
     if (novaMax < 1.0f) novaMax = 1.0f;
     j->vidaMaxima = novaMax;
     if (j->vida > j->vidaMaxima) j->vida = j->vidaMaxima;

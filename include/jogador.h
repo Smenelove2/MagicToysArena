@@ -9,6 +9,7 @@ struct Mapa;
 typedef struct Jogador {
     Vector2 posicao;
     float velocidade;
+    float velocidadeBase;
     float vida;
     float vidaMaxima;
     float regeneracaoBase;

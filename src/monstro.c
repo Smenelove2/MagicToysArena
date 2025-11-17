@@ -1,4 +1,5 @@
 #include "monstro.h"
+#include "monstro_dados.h"
 #include "objeto.h"
 #include "jogador.h"
 #include "mapa.h"
@@ -9,125 +10,67 @@
 
 void CarregarAssetsMonstro(Monstro *m)
 {
-    if (!m)
-        return;
+    if (!m) return;
+    const MonstroInfo *info = ObterInfoMonstro(m->tipo);
+    if (!info) return;
 
-    // Carrega sprites baseado no tipo de monstro
-    switch (m->tipo)
-    {
-    case MONSTRO_ESQUELETO:
-        m->sprite1 = LoadTexture("assets/esqueleto/esqueleto1.png");
-        m->sprite2 = LoadTexture("assets/esqueleto/esqueleto2.png");
-        m->sprite3 = LoadTexture("assets/esqueleto/esqueleto3.png");
-        break;
-    case MONSTRO_ZOMBIE:
-        m->sprite1 = LoadTexture("assets/zombie/zombie1.png");
-        m->sprite2 = LoadTexture("assets/zombie/zombie2.png");
-        m->sprite3 = LoadTexture("assets/zombie/zombie3.png");
-        break;
-    case MONSTRO_URSO:
-        m->sprite1 = LoadTexture("assets/urso/urso1.png");
-        m->sprite2 = LoadTexture("assets/urso/urso2.png");
-        m->sprite3 = LoadTexture("assets/urso/urso3.png");
-        break;
-    case MONSTRO_IT:
-        m->sprite1 = LoadTexture("assets/IT/IT-1.png");
-        m->sprite2 = LoadTexture("assets/IT/IT-2.png");
-        m->sprite3 = LoadTexture("assets/IT/IT-3.png");
-        break;
-    case MONSTRO_CHUCKY:
-        m->sprite1 = LoadTexture("assets/chucky/CHUCKY-1.png"); 
-        m->sprite2 = LoadTexture("assets/chucky/CHUCKY-2.png");
-        m->sprite3 = LoadTexture("assets/chucky/CHUCKY-3.png");
-        break;
-    case MONSTRO_MINECRAFT:
-        m->sprite1 = LoadTexture("assets/minecraft/minecraft-1.png");
-        m->sprite2 = LoadTexture("assets/minecraft/minecraft-2.png");
-        m->sprite3 = LoadTexture("assets/minecraft/minecraft-3.png");
-        break;
-        
-    case MONSTRO_ROXO:
-        m->sprite1 = LoadTexture("assets/roxo/MONSTRO-1.png");
-        m->sprite2 = LoadTexture("assets/roxo/MONSTRO-2.png");
-        m->sprite3 = LoadTexture("assets/roxo/MONSTRO-3.png");
-        break;
-
-    case MONSTRO_SUPREMO:
-        m->sprite1 = LoadTexture("assets/supremo/supremo-1.png");
-        m->sprite2 = LoadTexture("assets/supremo/supremo-2.png");
-        m->sprite3 = LoadTexture("assets/supremo/supremo-3.png");
-        break;
-    default:
-        m->sprite1 = LoadTexture("assets/esqueleto/esqueleto1.png");
-        m->sprite2 = LoadTexture("assets/esqueleto/esqueleto2.png");
-        m->sprite3 = LoadTexture("assets/esqueleto/esqueleto3.png");
-        break;
+    for (int i = 0; i < 3; ++i) {
+        if (!info->sprites[i]) continue;
+        Texture2D sprite = LoadTexture(info->sprites[i]);
+        if (sprite.id == 0) continue;
+        switch (i) {
+            case 0: m->sprite1 = sprite; break;
+            case 1: m->sprite2 = sprite; break;
+            case 2: m->sprite3 = sprite; break;
+        }
     }
 }
 
 bool IniciarMonstro(Monstro *m,
                     Vector2 posInicial,
-                    float vida,
-                    float velocidade,
-                    float fpsAnimacao,
-                    float alcanceAtaque,
-                    float cooldownAtaque,
-                    TipoMonstro tipo)
+                    const MonstroInfo *info)
 {
-    if (!m)
+    if (!m || !info)
         return false;
 
     m->posicao = posInicial;
-    m->vida = vida;
-    m->velocidade = velocidade;
-    m->tipo = tipo;
-    m->ativo = true; // Monstro inicia ativo
+    m->vidaMaxima = info->vida;
+    m->vida = info->vida;
+    m->velocidade = info->velocidade;
+    m->tipo = info->tipo;
+    m->ativo = true;
 
     memset(&m->sprite1, 0, sizeof(Texture2D) * 3);
 
-    m->fpsAnimacao = fpsAnimacao;
+    m->fpsAnimacao = info->fpsAnimacao;
     m->acumulador = 0.0f;
     m->frameAtual = 1;
 
-    m->alcanceAtaque = alcanceAtaque;
-    m->raioDeteccao = 300.0f; // Detecta o jogador a 300 pixels de distância
-    m->cooldownAtaque = cooldownAtaque;
+    m->alcanceAtaque = info->alcanceAtaque;
+    m->cooldownAtaque = info->cooldownAtaque;
     m->acumuladorAtaque = 0.0f;
+    m->danoContato = info->danoContato;
+    m->pontuacao = info->pontuacao;
 
-    m->cooldownArremesso = 2.0f; 
+    m->cooldownArremesso = info->cooldownArremesso;
     m->acumuladorArremesso = 0.0f;
     
-    m->objeto = NULL; 
+    m->objeto = NULL;
+    if (info->possuiObjeto && info->spriteObjeto) {
+        m->objeto = (struct ObjetoLancavel *)malloc(sizeof(ObjetoLancavel));
+        if (!m->objeto){
+            return false;
+        }
 
-    if (m->tipo == MONSTRO_ESQUELETO || m->tipo == MONSTRO_IT){
-    const char* caminhoSprite = NULL;
-    
-    if (m->tipo == MONSTRO_ESQUELETO) {
-        caminhoSprite = "assets/esqueleto/pedra.png";
-    } else { 
-        caminhoSprite = "assets/IT/balao.png";
+        memset(m->objeto, 0, sizeof(ObjetoLancavel));
+        m->objeto->dano = info->danoObjeto;
+        m->objeto->velocidade = info->velocidadeObjeto;
+
+        if(!IniciarObjeto(m->objeto, info->spriteObjeto)){
+            free(m->objeto);
+            m->objeto = NULL; 
+        }
     }
-
-    if (caminhoSprite != NULL) {
-    
-    m->objeto = (struct ObjetoLancavel *)malloc(sizeof(ObjetoLancavel));
-    if (!m->objeto){
-        return false;
-    }
-
-    memset(m->objeto, 0, sizeof(ObjetoLancavel));
-
-    m->objeto->dano = (m->tipo == MONSTRO_ESQUELETO) ? 10.0f : 5.0f;
-    m->objeto->velocidade = (m->tipo == MONSTRO_ESQUELETO) ? 400.0f : 200.0f;
-
-    if(!IniciarObjeto(m->objeto, caminhoSprite)){
-        free(m->objeto);
-        m->objeto = NULL; 
-    }
-    }
-} else {
-    m->objeto = NULL; 
-}
 
     return true;
 }
@@ -199,13 +142,32 @@ void DesenharMonstro(const Monstro *m)
     if (spriteAtual.id == 0) return;
     float escala = 2.0f; // Dobra o tamanho do monstro
 
-    DrawTextureEx(
-        spriteAtual,
-        (Vector2){m->posicao.x - (spriteAtual.width * escala) / 2,
-                  m->posicao.y - (spriteAtual.height * escala) / 2},
-        0.0f,
-        escala,
-        WHITE);
+    Vector2 posSprite = {
+        m->posicao.x - (spriteAtual.width * escala) / 2.0f,
+        m->posicao.y - (spriteAtual.height * escala) / 2.0f
+    };
+
+    DrawTextureEx(spriteAtual, posSprite, 0.0f, escala, WHITE);
+
+    if (m->vidaMaxima > 0.0f) {
+        float barraLarg = spriteAtual.width * escala * 0.7f;
+        float barraAlt = 6.0f;
+        float topoSprite = posSprite.y;
+        Rectangle fundo = {
+            m->posicao.x - barraLarg / 2.0f,
+            topoSprite - barraAlt - 6.0f,
+            barraLarg,
+            barraAlt
+        };
+        DrawRectangleRec(fundo, (Color){30, 30, 30, 220});
+
+        float proporcao = m->vida / m->vidaMaxima;
+        if (proporcao < 0.0f) proporcao = 0.0f;
+        if (proporcao > 1.0f) proporcao = 1.0f;
+        Rectangle barra = fundo;
+        barra.width *= proporcao;
+        DrawRectangleRec(barra, (Color){200, 60, 60, 240});
+    }
 }
 
 Vector2 GerarMonstros(struct Jogador *jogador, int mapL, int mapC, int tileW, int tileH)
@@ -260,7 +222,7 @@ Vector2 GerarMonstros(struct Jogador *jogador, int mapL, int mapC, int tileW, in
     return resultado;
 }
 
-// IA: Move o monstro em direção ao jogador se estiver no raio de detecção
+// IA básica: move continuamente em direção ao jogador
 void IAAtualizarMonstro(Monstro *m, struct Jogador *jogador, float dt)
 {
     if (!m || !m->ativo || !jogador)
@@ -270,22 +232,19 @@ void IAAtualizarMonstro(Monstro *m, struct Jogador *jogador, float dt)
     float dx = jogador->posicao.x - m->posicao.x;
     float dy = jogador->posicao.y - m->posicao.y;
     float distancia = sqrtf(dx * dx + dy * dy);
-    
-    if (distancia <= 0.01f) {
+    if (distancia <= 0.01f)
+        return;
+
+    bool ehArqueiro = (m->tipo == MONSTRO_ESQUELETO || m->tipo == MONSTRO_IT);
+    const float LIMITE_PARADA_ARQUEIRO = 140.0f;
+    if (ehArqueiro && distancia <= LIMITE_PARADA_ARQUEIRO) {
         return;
     }
 
-    // Se o jogador está dentro do raio de detecção, move em sua direção
-    if (distancia < m->raioDeteccao && distancia > 0.01f)
-    {
-        // Normaliza a direção
-        float dirX = dx / distancia;
-        float dirY = dy / distancia;
-
-        // Move na direção do jogador
-        m->posicao.x += dirX * m->velocidade * dt;
-        m->posicao.y += dirY * m->velocidade * dt;
-    }
+    float dirX = dx / distancia;
+    float dirY = dy / distancia;
+    m->posicao.x += dirX * m->velocidade * dt;
+    m->posicao.y += dirY * m->velocidade * dt;
 }
 
 // Colisão: Retorna true se o monstro colidiu com o jogador
@@ -306,13 +265,10 @@ bool VerificarColisaoMonstroJogador(Monstro *m, struct Jogador *jogador)
 }
 
 bool TentarLancarObjeto(Monstro *m, float dt, Vector2 alvo) {
-    if (!m) return false;
-    if (m->tipo != MONSTRO_ESQUELETO && m->tipo != MONSTRO_IT) {
-        return false;
-    }
+    if (!m || !m->objeto) return false;
     
-    if (!m->objeto || m->objeto->ativo) {
-        return false; 
+    if (m->objeto->ativo) {
+        return false;
     }
     
     if (m->acumuladorArremesso > 0.0f) {
@@ -325,8 +281,11 @@ bool TentarLancarObjeto(Monstro *m, float dt, Vector2 alvo) {
     float dx = alvo.x - m->posicao.x;
     float dy = alvo.y - m->posicao.y;
     float distancia = sqrtf(dx * dx + dy * dy);
-    
-    if (distancia > m->raioDeteccao) {
+    if (distancia <= 0.01f) {
+        return false;
+    }
+
+    if (distancia > m->alcanceAtaque) {
         return false;
     }
     

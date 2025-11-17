@@ -14,14 +14,16 @@ ArmaPrincipal gArmasPrincipais[] = {
         .ataqueEmArea = true,
         .formatoArea = TIPO_AREA_CONE,
         .tipoDisparo = TIPO_DISPARO_AUTOMATICO,
-        .alcanceMaximo = 90.0f,
-        .danoBase = 35.0f,
-        .tempoRecarga = 0.8f,
+        .alcanceMaximo = 130.0f,
+        .danoBase = 90.0f,
+        .tempoRecarga = 0.9f,
         .tempoRecargaRestante = 0.0f,
         .aberturaConeGraus = 110.0f,
         .spriteBase = "EspadadeDiamante",
         .offsetFrame1 = (Vector2){0.0f, 0.0f},
         .offsetFrame2 = (Vector2){0.0f, 0.0f},
+        .danoBaseOriginal = 90.0f,
+        .tempoRecargaOriginal = 0.9f,
     },
     {
         .nome = "RayGun",
@@ -31,13 +33,15 @@ ArmaPrincipal gArmasPrincipais[] = {
         .formatoArea = TIPO_AREA_NENHUMA,
         .tipoDisparo = TIPO_DISPARO_AUTOMATICO,
         .alcanceMaximo = 450.0f,
-        .danoBase = 25.0f,
-        .tempoRecarga = 0.15f,
+        .danoBase = 220.0f,
+        .tempoRecarga = 0.5f,
         .tempoRecargaRestante = 0.0f,
         .aberturaConeGraus = 0.0f,
         .spriteBase = "Raygun",
         .offsetFrame1 = (Vector2){6.0f, 0.0f},
         .offsetFrame2 = (Vector2){4.0f, 0.0f},
+        .danoBaseOriginal = 220.0f,
+        .tempoRecargaOriginal = 1.1f,
     },
     {
         .nome = "Varinha da Fada Madrinha",
@@ -47,13 +51,15 @@ ArmaPrincipal gArmasPrincipais[] = {
         .formatoArea = TIPO_AREA_PONTO,
         .tipoDisparo = TIPO_DISPARO_POINT_CLICK,
         .alcanceMaximo = 350.0f,
-        .danoBase = 40.0f,
-        .tempoRecarga = 1.0f,
+        .danoBase = 75.0f,
+        .tempoRecarga = 1.1f,
         .tempoRecargaRestante = 0.0f,
         .aberturaConeGraus = 0.0f,
         .spriteBase = "VarinhadaFadaMadrinha",
         .offsetFrame1 = (Vector2){0.0f, 0.0f},
         .offsetFrame2 = (Vector2){0.0f, 0.0f},
+        .danoBaseOriginal = 75.0f,
+        .tempoRecargaOriginal = 1.1f,
     },
     {
         .nome = "Laco da Verdade",
@@ -62,14 +68,17 @@ ArmaPrincipal gArmasPrincipais[] = {
         .ataqueEmArea = true,
         .formatoArea = TIPO_AREA_LINHA,
         .tipoDisparo = TIPO_DISPARO_AUTOMATICO,
-        .alcanceMaximo = 200.0f,
-        .danoBase = 30.0f,
-        .tempoRecarga = 1.2f,
+        .alcanceMaximo = 250.0f,
+        .danoBase = 65.0f,
+        .tempoRecarga = 1.0f,
         .tempoRecargaRestante = 0.0f,
         .aberturaConeGraus = 0.0f,
         .spriteBase = "LacodaVerdade",
         .offsetFrame1 = (Vector2){0.0f, 0.0f},
         .offsetFrame2 = (Vector2){0.0f, 0.0f},
+        .larguraLinha = 27.0f,
+        .danoBaseOriginal = 65.0f,
+        .tempoRecargaOriginal = 1.0f,
     },
 };
 
@@ -233,7 +242,7 @@ void GerarEfeitoArmaPrincipal(const ArmaPrincipal *arma, Vector2 origem, Vector2
     efeito->direcao = direcao;
     efeito->alcance = arma->alcanceMaximo;
     efeito->tempoRestante = 0.05f;
-    efeito->larguraLinha = 18.0f;
+    efeito->larguraLinha = (arma->larguraLinha > 0.0f) ? arma->larguraLinha : 18.0f;
     efeito->coneAberturaGraus = (arma->aberturaConeGraus > 0.0f) ? arma->aberturaConeGraus : 55.0f;
     efeito->raio = 32.0f;
     efeito->cor = CorParaFormato(arma->formatoArea);

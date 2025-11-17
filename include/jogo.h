@@ -32,8 +32,6 @@ typedef struct {
     EstadoArmaSecundaria armaSecundaria;
     float cooldownArmaSecundaria;
     float regeneracaoAtual;
-    char mensagemAtaque[128];
-    float tempoMensagemAtaque;
     bool pausado;
     bool solicitouRetornoMenu;
     EfeitoVisualArmaPrincipal efeitoArmaPrincipal;
@@ -41,6 +39,9 @@ typedef struct {
     int monstrosAtivos;
     float tempoSpawnMonstro;
     float intervaloSpawnMonstro;
+    float tempoTotalJogo;
+    int pontuacaoTotal;
+    bool jogadorMorto;
     ObjetoLancavel objetosEmVoo[MAX_OBJETOS_VOO];
 } EstadoJogo;
 
@@ -74,6 +75,7 @@ void JogoDesenhar(EstadoJogo *estado,
                   Mapa **mapa,
                   Texture2D *tiles,
                   int quantidadeTiles,
+                  int idTileForaMapa,
                   int linhasMapa,
                   int colunasMapa,
                   int tileLargura,

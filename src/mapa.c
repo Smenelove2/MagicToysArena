@@ -97,7 +97,8 @@ bool TilePossuiColisao(Mapa **mapa, int linhas, int colunas, int i, int j)
 void DesenharMapaVisivel(Camera2D *camera, int telaLargura, int telaAltura,
                          Mapa **mapa, int linhas, int colunas,
                          Texture2D *tiles, int quantidadeTiles,
-                         int tileLargura, int tileAltura)
+                         int tileLargura, int tileAltura,
+                         int idTileForaMapa)
 {
     if (!camera || !mapa || !tiles || quantidadeTiles <= 0) return;
     if (tileLargura <= 0 || tileAltura <= 0) return;
@@ -110,18 +111,23 @@ void DesenharMapaVisivel(Camera2D *camera, int telaLargura, int telaAltura,
     int jFim = (int)(fundoDireito.x / tileLargura) + 1;
     int iFim = (int)(fundoDireito.y / tileAltura) + 1;
 
-    if (jIni < 0) jIni = 0;
-    if (iIni < 0) iIni = 0;
-    if (jFim > colunas - 1) jFim = colunas - 1;
-    if (iFim > linhas - 1) iFim = linhas - 1;
+    int ruaIndex = idTileForaMapa;
+    if (ruaIndex < 0 || ruaIndex >= quantidadeTiles) ruaIndex = quantidadeTiles - 1;
 
     for (int i = iIni; i <= iFim; ++i) {
         for (int j = jIni; j <= jFim; ++j) {
-            int id = mapa[i][j].id_tile;
-            if (id < 0 || id >= quantidadeTiles) continue;
+            bool dentro = (i >= 0 && j >= 0 && i < linhas && j < colunas);
+            int id = dentro ? mapa[i][j].id_tile : ruaIndex;
+            if (id < 0 || id >= quantidadeTiles) id = ruaIndex;
 
-            Vector2 pos = { mapa[i][j].posX, mapa[i][j].posY };
-            DrawTextureV(tiles[id], pos, WHITE);
+            float posX = (float)j * tileLargura;
+            float posY = (float)i * tileAltura;
+            Vector2 pos = { posX, posY };
+            if (!dentro && id == ruaIndex) {
+                DrawTextureEx(tiles[id], pos, 0.0f, 2.0f, WHITE);
+            } else {
+                DrawTextureV(tiles[id], pos, WHITE);
+            }
         }
     }
 }

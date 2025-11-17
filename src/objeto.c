@@ -5,11 +5,17 @@
 
 bool IniciarObjeto(ObjetoLancavel* o, const char* caminhoSprite) {
     if (!o) return false;
-    
+
     o->sprite = LoadTexture(caminhoSprite);
     if (o->sprite.id == 0) {
         o->ativo = false;
         return false; 
+    }
+    if (caminhoSprite) {
+        strncpy(o->caminhoSprite, caminhoSprite, sizeof(o->caminhoSprite) - 1);
+        o->caminhoSprite[sizeof(o->caminhoSprite) - 1] = '\0';
+    } else {
+        o->caminhoSprite[0] = '\0';
     }
 
     o->posicao = (Vector2){0, 0};

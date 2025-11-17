@@ -12,6 +12,8 @@ typedef struct {
     Vector2 direcao;
     bool segueJogador;
     float tempoRestante;
+    float tempoDecorrido;
+    bool impactoAplicado;
 } EstadoArmaSecundaria;
 
 #endif

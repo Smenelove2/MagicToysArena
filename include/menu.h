@@ -19,7 +19,8 @@ typedef enum {
     MENU_ACAO_NENHUMA = 0,
     MENU_ACAO_JOGAR,
     MENU_ACAO_VOLTAR,
-    MENU_ACAO_SAIR
+    MENU_ACAO_SAIR,
+    MENU_ACAO_LEADERBOARD
 } AcaoMenu;
 
 typedef struct {
@@ -32,7 +33,7 @@ typedef struct {
 
 void MenuInicializarEstado(EstadoMenu *estado);
 AcaoMenu MenuDesenharTelaInicial(const EstadoMenu *estado, Vector2 mousePos, bool mouseClick,
-                                 Font fonteBold, Font fonteBoldPequena, int largura, int altura);
+                                 Font fonteBold, int largura, int altura);
 ResultadoMenu MenuDesenharTelaConfig(EstadoMenu *estado,
                                      Vector2 mousePos, bool mouseClick,
                                      Font fonteNormal, Font fonteBold,

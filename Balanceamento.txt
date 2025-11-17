@@ -1,0 +1,27 @@
+Ray Gun deve dar dano o suficiente para matar o Chucky com 1 hit com o dano base, deve ter dano o suficiente para matar o esqueleto com 1 hit com a armadura que dá dano e matar o IT com 1 hit caso use o capacete que da % de dano.
+A Ray gun também mata o herobrine em 3 ataques e o tibbers em 2 ataques com a armadura de dano.
+
+Varinha da fada madrinha deve matar o Randal com 1 Hit, deve matar o chucky com 1 hit com a armadura que dá dano e matar o esqueleto em 1 hit com o capacete que da % de dano. 
+
+A espada de diamante deve matar o esqueleto com 1 hit, deve matar o IT com 1 hit com a armadura que dá dano, e deve matar o zumbi com 1 hit com o capacete que da % de dano. 
+A espada também mata o Supremo com 3 ataques.
+
+O laço da verdade deve matar o Randal com 2 Hits, deve matar o randal com 1 hit com a armadura que dá dano, e deve matar o chucky com 1 hit com o capacete que dá % de dano. 
+
+A tocha de hades deve matar matar o Randall e o Chucky se tomarem o dano completo.
+
+O secador Tunel 3000, deve tirar metade da vida do Chucky.
+
+
+
+O esqueleto, IT e o Supremo devem ser um pouco mais lentos que o jogador, o zumbi, o tibbers, o herobrine devem ter a mesma velocidade que o jogador, o chucky deve ser mais rápido que o jogador, e o Randall deve ser bem mais rápido que o jogador.
+
+
+O Randall deve bater rápido, mas só dá 15 de dano.
+O Chucky deve bater com velocidade normal, mas dá 30 de dano.
+O Esqueleto taca pedra rápido, mas dá 10 de dano.
+O IT taca balão com velocidade um pouco lenta, mas dá 40 de dano.
+O Zumbi ataca normal, mas dá 50 de dano.
+O Herobrine deve atacar um pouco lento, mas dá 70 de dano.
+O Tibbers ataca rápido, mas dá 15 de dano.
+O Supremo ataca lento, mas dá 100 de dano.

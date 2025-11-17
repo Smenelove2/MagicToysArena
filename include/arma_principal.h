@@ -39,6 +39,9 @@ typedef struct {
     Texture2D spriteFrame2;
     Vector2 offsetFrame1;
     Vector2 offsetFrame2;
+    float larguraLinha;
+    float danoBaseOriginal;
+    float tempoRecargaOriginal;
 } ArmaPrincipal;
 
 typedef struct {
